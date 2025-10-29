@@ -1,11 +1,40 @@
+/* Smooth Scrolling */
+* {
+  scroll-behavior: smooth;
+}
+
+/* Custom Fonts */
+@font-face {
+  font-family: 'Warbones';
+  src: url('/fonts/Warbones-RpM1V.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Ardillah Kafi';
+  src: url('/fonts/Ardillah Kafi.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Ardillah Kafi', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  /* Cyberpunk Color Palette */
+  --cyber-bg: #0a0e27;
+  --cyber-bg-secondary: #1a1f3a;
+  --cyber-pink: #ff006e;
+  --cyber-cyan: #00f5ff;
+  --cyber-purple: #9d4edd;
+  --cyber-blue: #3a86ff;
+  --cyber-text: #e0e7ff;
+  --cyber-text-dim: #a8b2d1;
+
+  color: var(--cyber-text);
+  background-color: var(--cyber-bg);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -15,54 +44,59 @@
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: var(--cyber-cyan);
   text-decoration: inherit;
+  transition: color 0.3s ease;
 }
 a:hover {
-  color: #535bf2;
+  color: var(--cyber-pink);
 }
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
 }
 
-h1 {
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+h1, h2 {
   font-size: 3.2em;
   line-height: 1.1;
+  background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-pink));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+p {
+  color: var(--cyber-text-dim);
 }
 
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
+  border-radius: 12px;
+  border: 2px solid var(--cyber-cyan);
+  padding: 0.8em 1.5em;
   font-size: 1em;
-  font-weight: 500;
+  font-weight: 600;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: transparent;
+  color: var(--cyber-cyan);
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: all 0.3s ease;
 }
 button:hover {
-  border-color: #646cff;
+  background-color: var(--cyber-cyan);
+  color: var(--cyber-bg);
+  box-shadow: 0 0 20px var(--cyber-cyan);
+  transform: translateY(-2px);
 }
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 2px solid var(--cyber-pink);
+  outline-offset: 2px;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-}
