@@ -13,7 +13,7 @@
 
 .site-title {
   font-family: 'Warbones', sans-serif;
-  font-size: 5rem;
+  font-size: 6.5rem;
   margin: 0;
   background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-pink));
   -webkit-background-clip: text;
@@ -38,11 +38,12 @@
 }
 
 .merica-character {
-  width: 450px;
+  width: 585px;
   height: auto;
-  margin-bottom: 3rem;
+  margin-bottom: 1.75rem;
   border-radius: 20px;
   box-shadow: 0 0 30px rgba(0, 245, 255, 0.3);
+  transition: opacity 0.4s ease-in-out;
 }
 
 .hero-section h2 {
@@ -115,7 +116,7 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .site-title {
-    font-size: 3rem;
+    font-size: 3.9rem;
   }
 
   .main-content {
@@ -124,7 +125,8 @@
   }
 
   .merica-character {
-    width: 280px;
+    width: 364px;
+    margin-bottom: 1.25rem;
   }
 
   .hero-section h2 {
@@ -157,7 +159,7 @@
 
 @media (max-width: 480px) {
   .site-title {
-    font-size: 2rem;
+    font-size: 2.6rem;
     letter-spacing: 0.05em;
   }
 
@@ -166,7 +168,8 @@
   }
 
   .merica-character {
-    width: 220px;
+    width: 286px;
+    margin-bottom: 1rem;
   }
 
   .hero-section h2 {
@@ -193,5 +196,229 @@
   .cta-button {
     font-size: 1rem;
     padding: 0.7rem 1.5rem;
+  }
+}
+
+/* Animated Background */
+.animated-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: hidden;
+  perspective: 1000px;
+}
+
+/* Perspective Grid */
+.perspective-grid {
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  top: -50%;
+  left: -50%;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 49px,
+      rgba(0, 245, 255, 0.15) 49px,
+      rgba(0, 245, 255, 0.15) 50px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 49px,
+      rgba(0, 245, 255, 0.15) 49px,
+      rgba(0, 245, 255, 0.15) 50px
+    );
+  transform: rotateX(60deg) translateZ(-200px);
+  animation: gridMove 30s linear infinite;
+}
+
+@keyframes gridMove {
+  0% {
+    transform: rotateX(60deg) translateZ(-200px) translateY(0);
+  }
+  100% {
+    transform: rotateX(60deg) translateZ(-200px) translateY(100px);
+  }
+}
+
+/* Floating Wireframe Shapes */
+.floating-shape {
+  position: absolute;
+  background: transparent;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+  object-fit: contain;
+}
+
+/* Shape 1 - Dog Bone (Cyan) */
+.shape-1 {
+  width: 120px;
+  height: auto;
+  top: 15%;
+  left: 10%;
+  filter: drop-shadow(0 0 8px rgba(0, 245, 255, 0.8))
+          drop-shadow(0 0 15px rgba(0, 245, 255, 0.6))
+          drop-shadow(0 0 25px rgba(0, 245, 255, 0.4))
+          brightness(1.2);
+  animation: float1 25s, rotate1 30s linear infinite;
+}
+
+@keyframes float1 {
+  0%, 100% { transform: translate(0, 0) rotateX(0deg) rotateY(0deg); }
+  50% { transform: translate(-30px, 40px) rotateX(180deg) rotateY(180deg); }
+}
+
+@keyframes rotate1 {
+  0% { transform: rotateZ(0deg); }
+  100% { transform: rotateZ(360deg); }
+}
+
+/* Shape 2 - Paw Print (Pink) */
+.shape-2 {
+  width: 100px;
+  height: auto;
+  top: 10%;
+  right: 15%;
+  filter: drop-shadow(0 0 8px rgba(255, 0, 110, 0.8))
+          drop-shadow(0 0 15px rgba(255, 0, 110, 0.6))
+          drop-shadow(0 0 25px rgba(255, 0, 110, 0.4))
+          brightness(1.2);
+  animation: float2 28s, rotate2 35s linear infinite;
+}
+
+@keyframes float2 {
+  0%, 100% { transform: translate(0, 0) rotateZ(0deg); }
+  50% { transform: translate(40px, -30px) rotateZ(15deg); }
+}
+
+@keyframes rotate2 {
+  0% { transform: rotateZ(0deg); }
+  100% { transform: rotateZ(360deg); }
+}
+
+/* Shape 3 - Dog Tag (Purple) */
+.shape-3 {
+  width: 100px;
+  height: auto;
+  top: 40%;
+  left: 50%;
+  filter: drop-shadow(0 0 8px rgba(157, 78, 221, 0.8))
+          drop-shadow(0 0 15px rgba(157, 78, 221, 0.6))
+          drop-shadow(0 0 25px rgba(157, 78, 221, 0.4))
+          brightness(1.2);
+  animation: float3 32s;
+}
+
+@keyframes float3 {
+  0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+  50% { transform: translate(-30%, -70%) rotate(180deg); }
+}
+
+/* Shape 4 - Dog Bone (Blue) */
+.shape-4 {
+  width: 110px;
+  height: auto;
+  bottom: 20%;
+  left: 20%;
+  filter: drop-shadow(0 0 8px rgba(58, 134, 255, 0.8))
+          drop-shadow(0 0 15px rgba(58, 134, 255, 0.6))
+          drop-shadow(0 0 25px rgba(58, 134, 255, 0.4))
+          brightness(1.2);
+  animation: float4 27s, rotate4 40s linear infinite;
+}
+
+@keyframes float4 {
+  0%, 100% { transform: translate(0, 0) rotateX(0deg) rotateY(0deg); }
+  50% { transform: translate(35px, -40px) rotateX(-180deg) rotateY(-180deg); }
+}
+
+@keyframes rotate4 {
+  0% { transform: rotateZ(0deg); }
+  100% { transform: rotateZ(-360deg); }
+}
+
+/* Shape 5 - Paw Print (Cyan) */
+.shape-5 {
+  width: 100px;
+  height: auto;
+  bottom: 15%;
+  right: 12%;
+  filter: drop-shadow(0 0 8px rgba(0, 245, 255, 0.8))
+          drop-shadow(0 0 15px rgba(0, 245, 255, 0.6))
+          drop-shadow(0 0 25px rgba(0, 245, 255, 0.4))
+          brightness(1.2);
+  animation: float5 29s, rotate5 38s linear infinite;
+}
+
+@keyframes float5 {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-40px, 35px); }
+}
+
+@keyframes rotate5 {
+  0% { transform: rotateZ(0deg); }
+  100% { transform: rotateZ(360deg); }
+}
+
+/* Responsive adjustments for background */
+@media (max-width: 768px) {
+  .floating-shape {
+    opacity: 0.8;
+  }
+
+  .shape-1 {
+    width: 90px;
+    height: auto;
+  }
+
+  .shape-2, .shape-5 {
+    width: 70px;
+    height: auto;
+  }
+
+  .shape-3 {
+    width: 70px;
+    height: auto;
+  }
+
+  .shape-4 {
+    width: 85px;
+    height: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .perspective-grid {
+    opacity: 0.5;
+  }
+
+  .floating-shape {
+    opacity: 0.6;
+  }
+
+  .shape-1 {
+    width: 70px;
+    height: auto;
+  }
+
+  .shape-2, .shape-5 {
+    width: 55px;
+    height: auto;
+  }
+
+  .shape-3 {
+    width: 55px;
+    height: auto;
+  }
+
+  .shape-4 {
+    width: 65px;
+    height: auto;
   }
 }
