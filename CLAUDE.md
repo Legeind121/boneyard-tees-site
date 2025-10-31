@@ -61,8 +61,7 @@ public/
 **Main Sections:**
 1. Header - "BONEYARD TEES" logo with cyan-to-pink gradient (6.5rem desktop, 30% larger than original)
 2. Hero - Animated Merica character (585px desktop, 30% larger), tagline, welcome message
-3. Featured Designs - Two-column section with customer carousel and shop placeholder (new)
-4. CTA - Customer photo, "GET FITTED" button (placeholder, not functional yet)
+3. Featured Designs - Stacked vertical layout with two independent carousels (customer & shop)
 
 **Merica Character Animation:**
 - Uses React `useState` and `useEffect` hooks for random pose changes
@@ -87,29 +86,53 @@ public/
 - Margin: `2rem` vertical (desktop), `1.5rem` (tablet), `1rem` (mobile)
 
 **Featured Designs Section (Section 3):**
-- Two-column layout (side-by-side on desktop, stacked on mobile/tablet)
-- **Left Column - "Featured Customer Designs":**
-  - Title: Cyan color with multi-layer glow and faint neon outline
-  - Card deck-style carousel with 5 images (3 real customer photos + 2 gray placeholders)
-  - **Current customer images:**
-    - `barber & burnout.jpg` (image 1)
-    - `Dorman '25 picnic.png` (image 2)
-    - `Strongside kettlebell.png` (image 3)
-  - Auto-rotation: Changes every 5 seconds
-  - Manual navigation: Left/right arrow buttons
-  - When arrows clicked, auto-rotation pauses for 10 seconds then resumes
-  - Card stacking animation: Cards slide behind each other like a deck
-  - Active card: Full opacity, largest, front of stack
-  - Background cards: 30% opacity, stacked with slight offset
-  - Smooth 0.6s cubic-bezier transitions between cards
-  - Pink glow effect on customer images (same as CTA section)
-  - Indicator dots below carousel show active slide
-  - State tracked: `currentCarouselIndex`, `isCarouselPaused`
-  - Carousel images array in App.jsx: 5 objects with src, alt, isPlaceholder properties
-- **Right Column - "Featured Shop Designs":**
-  - Title: Purple color with multi-layer glow and faint neon outline
-  - "Coming Soon" placeholder (purple border, matching carousel dimensions)
-  - Ready for future shop product images
+- **Stacked vertical layout** with 3rem gap between carousels
+- Both carousels run **independently** for optimal performance (lower system power)
+- Both use identical carousel component structure with opposite animations
+
+**"Featured Customer Designs" Carousel (Top):**
+- Title: Cyan color with multi-layer glow and faint neon outline
+- **Cyan theme:** Navigation buttons and indicators use cyan (`--cyber-cyan`)
+- Card deck-style carousel with 5 images (3 real customer photos + 2 gray placeholders)
+- **Current customer images:**
+  - `barber & burnout.jpg` (image 1)
+  - `Dorman '25 picnic.png` (image 2)
+  - `Strongside kettlebell.png` (image 3)
+- **Animation:** Cards slide **RIGHT** (left to right) with dramatic "card dealer" effect
+  - `translateX(${position * 250}px)` - 250px horizontal offset per position
+  - `rotate(${position * 3}deg)` - 3° clockwise rotation per position
+  - `scale(${1 - position * 0.08})` - 8% scale reduction per position
+  - `translateY(${position * 5}px)` - 5px vertical offset per position
+- **Horizontal offset:** Entire carousel offset **9rem to the left** (`.customer-carousel-column`)
+- Auto-rotation: Changes every 5 seconds
+- Manual navigation: Left/right arrow buttons (cyan)
+- When arrows clicked, auto-rotation pauses for 10 seconds then resumes
+- Active card: Full opacity, largest, front of stack (z-index: 5)
+- Background cards: 30% opacity, stacked progressively behind
+- Smooth 0.6s cubic-bezier(0.4, 0, 0.2, 1) transitions between cards
+- Pink glow effect on customer images (box-shadow: 0 0 40px rgba(255, 0, 110, 0.4))
+- Indicator dots below carousel show active slide
+- State tracked: `currentCarouselIndex`, `isCarouselPaused`
+- Carousel images array in App.jsx: `carouselImages` (5 objects with src, alt, isPlaceholder properties)
+
+**"Featured Shop Designs" Carousel (Bottom):**
+- Title: Purple color with multi-layer glow and faint neon outline
+- **Purple theme:** Navigation buttons and indicators use purple (`--cyber-purple`) via `.shop-theme` class
+- Card deck-style carousel with 5 placeholder cards (all gray "Coming Soon" boxes for now)
+- **Animation:** Cards slide **LEFT** (right to left) - opposite of customer carousel
+  - `translateX(${position * -250}px)` - **Negative** 250px horizontal offset (slides left)
+  - `rotate(${position * -3}deg)` - **Negative** 3° counter-clockwise rotation
+  - `scale(${1 - position * 0.08})` - 8% scale reduction per position
+  - `translateY(${position * 5}px)` - 5px vertical offset per position
+- **Horizontal offset:** Entire carousel offset **9rem to the right** (`.shop-carousel-column`)
+- Auto-rotation: Changes every 5 seconds (independent of customer carousel)
+- Manual navigation: Left/right arrow buttons (purple)
+- When arrows clicked, auto-rotation pauses for 10 seconds then resumes
+- Same opacity, z-index stacking, and transition properties as customer carousel
+- Indicator dots below carousel show active slide (purple theme)
+- State tracked: `currentShopCarouselIndex`, `isShopCarouselPaused`
+- Carousel images array in App.jsx: `shopCarouselImages` (5 placeholder objects)
+- Ready for future shop product images
 
 **Animated Background:**
 - Perspective grid (Tron-style) - subtle cyan lines, slow scrolling animation
@@ -162,8 +185,12 @@ public/
 - No e-commerce functionality yet
 - Use functional components and React hooks
 - Owner is non-technical - explain changes clearly
-- **DO NOT** modify animation timing (Merica poses or carousel rotation) without discussing with owner first
-- Multiple independent animations run simultaneously (Merica + carousel) - both use separate state and useEffect hooks
+- **DO NOT** modify animation timing (Merica poses or carousel rotations) without discussing with owner first
+- Multiple independent animations run simultaneously:
+  - Merica character pose changes (8-15 second intervals)
+  - Customer carousel auto-rotation (5 second intervals)
+  - Shop carousel auto-rotation (5 second intervals, independent of customer carousel)
+  - All use separate state and useEffect hooks for optimal performance
 
 ## Troubleshooting & Lessons Learned
 
@@ -180,9 +207,18 @@ public/
   4. Don't add `background-color` to `.carousel-card` - causes visibility issues
   5. Don't override z-index with `!important` on `.carousel-card.active` - breaks stacking
 
+**Carousel Animation System:**
+- **Opposite directions achieved with negative values:** Customer carousel uses positive `translateX(250px)` and `rotate(3deg)`, shop carousel uses negative `translateX(-250px)` and `rotate(-3deg)`
+- **Animation intensity:** 250px horizontal offset per position creates dramatic "card dealer" effect (increased from original 10px subtle stacking)
+- **Rotation adds flair:** 3° rotation per position makes cards appear to "flip" as they move to back of deck
+- **Horizontal carousel offsets:** Use negative margins on `.customer-carousel-column` (left offset) and `.shop-carousel-column` (right offset) to create asymmetric staggered layout
+- **Independent state:** Each carousel has its own state variables (`currentCarouselIndex` vs `currentShopCarouselIndex`) and navigation functions to prevent conflicts
+- **Theme customization:** Use `.shop-theme` class on navigation/indicators to override cyan defaults with purple colors
+
 **CSS Spacing Changes:**
 - When reducing spacing, do it incrementally and check results before continuing
-- The `.main-content gap` property controls spacing between ALL main sections (hero, featured, CTA)
+- The `.main-content gap` property controls spacing between ALL main sections (hero, featured designs)
+- The `.featured-section gap` property controls vertical spacing between the two carousels (currently 3rem)
 - Hero section text spacing is controlled by individual margin-bottom values on h2, .tagline, etc.
 
 **Development Workflow:**

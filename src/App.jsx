@@ -26,6 +26,19 @@ function App() {
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0)
   const [isCarouselPaused, setIsCarouselPaused] = useState(false)
 
+  // Array of shop images for carousel (all placeholders for now)
+  const shopCarouselImages = [
+    { src: '', alt: 'Shop Placeholder 1', isPlaceholder: true },
+    { src: '', alt: 'Shop Placeholder 2', isPlaceholder: true },
+    { src: '', alt: 'Shop Placeholder 3', isPlaceholder: true },
+    { src: '', alt: 'Shop Placeholder 4', isPlaceholder: true },
+    { src: '', alt: 'Shop Placeholder 5', isPlaceholder: true }
+  ]
+
+  // State to track current shop carousel index
+  const [currentShopCarouselIndex, setCurrentShopCarouselIndex] = useState(0)
+  const [isShopCarouselPaused, setIsShopCarouselPaused] = useState(false)
+
   // Preload all images on component mount
   useEffect(() => {
     mericaPoses.forEach((pose) => {
@@ -86,6 +99,17 @@ function App() {
     return () => clearInterval(intervalId)
   }, [isCarouselPaused, carouselImages.length])
 
+  // Shop carousel auto-rotation logic
+  useEffect(() => {
+    if (isShopCarouselPaused) return
+
+    const intervalId = setInterval(() => {
+      setCurrentShopCarouselIndex((prevIndex) => (prevIndex + 1) % shopCarouselImages.length)
+    }, 5000) // Change every 5 seconds
+
+    return () => clearInterval(intervalId)
+  }, [isShopCarouselPaused, shopCarouselImages.length])
+
   // Carousel navigation functions
   const nextSlide = () => {
     setIsCarouselPaused(true)
@@ -99,6 +123,21 @@ function App() {
       prevIndex === 0 ? carouselImages.length - 1 : prevIndex - 1
     )
     setTimeout(() => setIsCarouselPaused(false), 10000) // Resume after 10 seconds
+  }
+
+  // Shop carousel navigation functions
+  const nextShopSlide = () => {
+    setIsShopCarouselPaused(true)
+    setCurrentShopCarouselIndex((prevIndex) => (prevIndex + 1) % shopCarouselImages.length)
+    setTimeout(() => setIsShopCarouselPaused(false), 10000) // Resume after 10 seconds
+  }
+
+  const prevShopSlide = () => {
+    setIsShopCarouselPaused(true)
+    setCurrentShopCarouselIndex((prevIndex) =>
+      prevIndex === 0 ? shopCarouselImages.length - 1 : prevIndex - 1
+    )
+    setTimeout(() => setIsShopCarouselPaused(false), 10000) // Resume after 10 seconds
   }
 
   return (
@@ -142,8 +181,8 @@ function App() {
 
         {/* NEW Section 2: Featured Designs */}
         <section className="featured-section">
-          {/* Left Column: Customer Designs Carousel */}
-          <div className="featured-column">
+          {/* Customer Designs Carousel */}
+          <div className="featured-column customer-carousel-column">
             <h3 className="featured-title featured-title-customer">Featured Customer Designs</h3>
             <div className="carousel-container">
               <div className="carousel-cards">
@@ -158,7 +197,7 @@ function App() {
                       className={`carousel-card ${position === 0 ? 'active' : ''}`}
                       style={{
                         zIndex: carouselImages.length - position,
-                        transform: `translateX(${position * 10}px) translateY(${position * 5}px) scale(${1 - position * 0.05})`,
+                        transform: `translateX(${position * 250}px) translateY(${position * 5}px) scale(${1 - position * 0.08}) rotate(${position * 3}deg)`,
                         opacity: position === 0 ? 1 : 0.3
                       }}
                     >
@@ -190,20 +229,53 @@ function App() {
             </div>
           </div>
 
-          {/* Right Column: Shop Designs Placeholder */}
-          <div className="featured-column">
+          {/* Shop Designs Carousel */}
+          <div className="featured-column shop-carousel-column">
             <h3 className="featured-title featured-title-shop">Featured Shop Designs</h3>
-            <div className="shop-placeholder">
-              <p className="placeholder-text">Coming Soon</p>
+            <div className="carousel-container">
+              <div className="carousel-cards">
+                {shopCarouselImages.map((image, index) => {
+                  // Calculate position relative to current index
+                  let position = index - currentShopCarouselIndex
+                  if (position < 0) position += shopCarouselImages.length
+
+                  return (
+                    <div
+                      key={index}
+                      className={`carousel-card ${position === 0 ? 'active' : ''}`}
+                      style={{
+                        zIndex: shopCarouselImages.length - position,
+                        transform: `translateX(${position * -250}px) translateY(${position * 5}px) scale(${1 - position * 0.08}) rotate(${position * -3}deg)`,
+                        opacity: position === 0 ? 1 : 0.3
+                      }}
+                    >
+                      {image.isPlaceholder ? (
+                        <div className="placeholder-box">
+                          <span className="placeholder-text">{image.alt}</span>
+                        </div>
+                      ) : (
+                        <img src={image.src} alt={image.alt} className="carousel-image" />
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+              <button className="carousel-nav carousel-nav-prev shop-theme" onClick={prevShopSlide}>
+                ‹
+              </button>
+              <button className="carousel-nav carousel-nav-next shop-theme" onClick={nextShopSlide}>
+                ›
+              </button>
+              <div className="carousel-indicators">
+                {shopCarouselImages.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`carousel-indicator shop-theme ${index === currentShopCarouselIndex ? 'active' : ''}`}
+                  />
+                ))}
+              </div>
             </div>
           </div>
-        </section>
-
-        {/* Section 3: CTA (moved from original Section 2) */}
-        <section className="cta-section">
-          <img src="/Images/customer images/customer hoody 1.jpg" alt="Customer wearing BoneYard hoodie" className="customer-image" />
-          <h3 className="cta-headline">Blank tees or custom designs. Your call.</h3>
-          <button className="cta-button">Get Fitted</button>
         </section>
       </main>
     </div>
