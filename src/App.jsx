@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import './App.css'
+import ChatWidget from './components/ChatWidget'
 
 function App() {
   // Array of Merica character poses
@@ -278,6 +279,9 @@ function App() {
           </div>
         </section>
       </main>
+
+      {/* Merica AI Chatbot */}
+      <ChatWidget />
     </div>
   )
 }

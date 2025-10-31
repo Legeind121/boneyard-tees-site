@@ -14,27 +14,226 @@ Guidance for Claude Code when working with this repository.
 ## Dev Commands
 
 ```bash
-npm run dev      # Dev server at http://localhost:5173
+npm run dev      # Dev server at http://127.0.0.1:5173
 npm run build    # Production build
 npm run lint     # Check code quality
 ```
 
-**IMPORTANT:** `vite.config.js` is configured with `host: '127.0.0.1'` to bind to IPv4 explicitly. This fixes Windows connection issues where Vite defaults to IPv6 causing ERR_CONNECTION_REFUSED errors in browsers.
+**IMPORTANT:**
+- **Local Browser URL:** http://127.0.0.1:5173 (NOT localhost:5173)
+- `vite.config.js` is configured with `host: '127.0.0.1'` to bind to IPv4 explicitly
+- This fixes Windows connection issues where Vite defaults to IPv6 causing ERR_CONNECTION_REFUSED errors in browsers
 
 ## Project Structure
 
 ```
 src/
-  main.jsx        # Entry point
-  App.jsx         # Main landing page component
-  App.css         # Component styles
-  index.css       # Global styles, cyberpunk colors, fonts
+  main.jsx                    # Entry point
+  App.jsx                     # Main landing page component
+  App.css                     # Component styles
+  index.css                   # Global styles, cyberpunk colors, fonts
+  components/
+    ChatWidget.jsx            # Merica AI chatbot component
+    ChatWidget.css            # Chatbot styling
 public/
-  Images/         # All images (Merica character, customer photos, logos, line art)
-  fonts/          # Warbones, Ardillah Kafi fonts
+  Images/                     # All images (Merica character, customer photos, logos, line art)
+  fonts/                      # Warbones, Ardillah Kafi fonts
+worker.js                     # Cloudflare Worker backend for chatbot
+wrangler.toml                 # Cloudflare Worker configuration
+.env                          # Environment variables (ANTHROPIC_API_KEY) - NEVER COMMIT
+index.html                    # Vite entry point OR maintenance page
+index.html.backup             # Backup of full React site
+CHATBOT-SETUP.md              # Complete chatbot deployment guide
 ```
 
 **Asset Paths:** Reference public files as `/Images/folder/file.ext` or `/fonts/file.otf`
+
+## Merica AI Chatbot
+
+**CRITICAL:** Interactive AI chatbot powered by Claude AI (Haiku 4.5) - allows customers to chat with Merica mascot.
+
+### 🚧 Current Development Status (Updated: 2025-10-31)
+
+**PROGRESS:**
+- ✅ Cloudflare Worker deployed: `https://merica-chatbot.boneyardtees.workers.dev`
+- ✅ Anthropic API key secured on Cloudflare (via `wrangler secret put`)
+- ✅ ChatWidget component created and integrated into App.jsx
+- ✅ Cyberpunk styling matches site aesthetic
+- ✅ Chat bubble visible in bottom-right corner
+- ❌ **BLOCKED:** Worker returning errors - chatbot shows "Damn, something broke. Try again in a sec."
+
+**WHERE WE LEFT OFF:**
+- Chat widget UI is working (bubble, window, message sending)
+- Messages are reaching the worker (network request succeeds)
+- Worker is crashing or returning errors when calling Claude API
+- **NEXT STEP:** Debug worker logs using `wrangler tail` to identify the error
+  - Possible issues: Wrong model name, SDK bundling problem, API authentication
+
+**CRITICAL SECURITY - .env FILE:**
+- ✅ `.env` file is already protected by `.gitignore` (added on 2025-10-31)
+- ✅ Safe to commit and push all OTHER files to git
+- ✅ API key is stored as secret on Cloudflare Worker (never exposed in code)
+- **Verification:** Run `git status` - `.env` should NOT appear in untracked files
+
+**GIT PUSH vs LIVE SITE DEPLOYMENT:**
+
+**How It Works:**
+1. **Git Push** → Only updates GitHub repository (code storage)
+2. **Cloudflare Pages** → Automatically rebuilds and deploys when it detects new commits
+3. **Your Live Site** → Updates ~1 minute after Cloudflare Pages rebuilds
+
+**To Push Code WITHOUT Updating Live Site:**
+- **Option 1:** Pause Cloudflare Pages deployments:
+  1. Go to Cloudflare Dashboard → Pages → boneyardtees.com
+  2. Settings → Builds & deployments
+  3. Toggle "Pause deployments"
+  4. Now you can `git push` safely - live site won't update
+  5. Re-enable when ready to deploy
+
+- **Option 2:** Use a development branch:
+  1. Create branch: `git checkout -b chatbot-dev`
+  2. Push to dev branch: `git push origin chatbot-dev`
+  3. Test on Cloudflare preview URL (auto-created for branches)
+  4. Merge to `main` only when ready for production
+
+**Current Safe Approach:**
+- Live site at boneyardtees.com is still showing the pre-chatbot version
+- You can `git push` to save progress without affecting live site (Cloudflare Pages may auto-deploy though)
+- Recommend pausing deployments until chatbot is fully working
+
+**IMMEDIATE NEXT STEPS:**
+1. Debug worker error:
+   - Run `wrangler tail` in terminal
+   - Send test message in chat
+   - Check logs for error details
+2. Fix worker issue (likely model name or SDK problem)
+3. Test Merica's personality
+4. Decide deployment strategy (pause Cloudflare Pages or use dev branch)
+
+### Architecture
+
+**Backend:** Cloudflare Worker (serverless)
+- `worker.js` - API endpoint that communicates with Claude API
+- `wrangler.toml` - Cloudflare Worker configuration
+- **Endpoint:** Will be deployed to `https://merica-chatbot.<subdomain>.workers.dev` or custom domain
+
+**Frontend:** React component
+- `src/components/ChatWidget.jsx` - Chat bubble and window component
+- `src/components/ChatWidget.css` - Cyberpunk-styled chat interface (cyan/pink neon theme)
+- **Integration:** Import and add `<ChatWidget />` to App.jsx
+
+**Environment Variables:**
+- `.env` - Contains `ANTHROPIC_API_KEY` (secured, never commit to git)
+- `.gitignore` - Protects `.env`, `.env.local`, `.env.*.local` from git commits
+- API key is stored as encrypted secret on Cloudflare Worker via `wrangler secret put ANTHROPIC_API_KEY`
+
+### Merica's Personality (Rated-R Badass)
+
+**CRITICAL CONSTRAINTS - DO NOT MODIFY WITHOUT OWNER APPROVAL:**
+
+**Tone & Voice:**
+- Rated-R: Sarcastic, dark humor, ball-busting, edgy adult humor
+- No kid-friendly softness - think biker bar pit bull who runs a custom tee shop
+- Roasting, dad jokes, mom jokes all fair game
+- Confident bordering on cocky, street-smart, zero BS tolerance
+- **Response length:** 2-3 sentences MAX (enforced via `max_tokens: 200` in worker.js)
+
+**Topic Boundaries (STRICT):**
+- **ONLY discusses:** BoneYard Tees brand, custom apparel, DTF printing, embroidery, custom orders
+- **Refuses all off-topic requests:** politics, medical advice, homework, news, etc.
+- **Redirect example:** "I'm a pit bull who knows custom tees. That's it. What apparel you need?"
+
+**Example Responses:**
+- "Yo. Need custom tees or you just here to waste my time?"
+- "DTF printing? Direct-to-Film. Makes your design look crispy as hell. Not rocket science."
+- "Your mom called - she wants a custom hoodie. Just kidding, but seriously, what you need?"
+- "Dad joke? Fine: What do you call a shirt that's always angry? A tank top. ...Alright, back to business."
+
+**System Prompt Location:** `worker.js` lines 11-73 (`MERICA_SYSTEM_PROMPT` constant)
+
+### Chat Widget Features
+
+**UI/UX:**
+- Floating chat bubble (bottom-right corner) with Merica avatar
+- Pulsing cyan neon glow animation on bubble
+- Expandable chat window (400px × 600px desktop, fullscreen on mobile)
+- Cyberpunk styling matches site aesthetic (cyan/pink gradients, neon glows)
+- Typing indicator (3 animated dots with cyan glow)
+- Auto-scroll to newest messages
+- Welcome message on first open: "Yo. I'm Merica. Need custom tees or you just browsing?"
+
+**Technical Details:**
+- Uses React hooks: `useState`, `useEffect`, `useRef`
+- Maintains conversation history (last 10 messages sent to API for context)
+- Fetches responses from Cloudflare Worker API endpoint
+- Error handling with fallback messages
+- Mobile responsive (fullscreen on screens <480px)
+
+**API Configuration:**
+- Update `API_ENDPOINT` constant in ChatWidget.jsx after deploying worker
+- Format: `https://merica-chatbot.<subdomain>.workers.dev` or custom domain
+
+### Deployment
+
+**Full deployment guide:** See `CHATBOT-SETUP.md`
+
+**Quick deployment steps:**
+1. Install Wrangler CLI: `npm install -g wrangler`
+2. Login: `wrangler login`
+3. Install dependencies: `npm install @anthropic-ai/sdk`
+4. Deploy worker: `wrangler deploy`
+5. Set API key: `wrangler secret put ANTHROPIC_API_KEY`
+6. Update `API_ENDPOINT` in ChatWidget.jsx with worker URL
+7. Import ChatWidget in App.jsx
+8. Test locally: `npm run dev`
+9. Deploy: `git push`
+
+**Cost Monitoring:**
+- Haiku 4.5 pricing: ~$0.0003 per chat interaction
+- Light traffic (100 chats/day): ~$1-3/month
+- Medium traffic (1,000 chats/day): ~$10-30/month
+- Set budget alerts at [console.anthropic.com/settings/limits](https://console.anthropic.com/settings/limits)
+
+### Maintenance Mode
+
+**Current Status:** Site can be toggled between full React app and maintenance page
+
+**Files:**
+- `index.html` - Currently points to Vite React app OR maintenance page (depending on deployment)
+- `index.html.backup` - Backup of full React site (restore with `cp index.html.backup index.html`)
+
+**Maintenance Page Features:**
+- Standalone HTML (no React bundle)
+- Displays: "UNDER CONSTRUCTION" with Merica idle pose
+- Cyberpunk grid background animation
+- Cyan/pink neon typography matching brand
+- Mobile responsive
+
+**Toggle to Maintenance:**
+```bash
+# Save current site
+cp index.html index.html.backup
+
+# Create simple maintenance page (replace index.html content)
+# Then deploy
+git add index.html && git commit -m "Enable maintenance mode" && git push
+```
+
+**Restore Full Site:**
+```bash
+cp index.html.backup index.html
+git add index.html && git commit -m "Restore full site" && git push
+```
+
+### Important Notes
+
+- **NEVER commit `.env` file** - API key must stay private
+- **Personality is in backend** - changes to Merica's tone require redeploying worker (`wrangler deploy`)
+- **Frontend changes** (ChatWidget UI) require React rebuild and Cloudflare Pages deployment
+- **Test responses locally** before deploying personality changes
+- **Monitor API costs** weekly during initial launch
+- **DO NOT modify personality without owner approval** - tone is intentionally edgy/rated-R
+- Worker logs available via: `wrangler tail` (useful for debugging API issues)
 
 ## Brand & Design
 
