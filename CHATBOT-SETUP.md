@@ -81,7 +81,7 @@ wrangler secret put ANTHROPIC_API_KEY
 
 When prompted, **paste your API key** from `.env` file:
 ```
-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
+sk-ant-api03-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 Press Enter. You should see: `✨ Success! Uploaded secret ANTHROPIC_API_KEY`
