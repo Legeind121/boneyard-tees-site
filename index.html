@@ -4,10 +4,126 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>boneyard-tees-site</title>
+    <title>BoneYard Tees - Coming Soon</title>
+    <style>
+      @font-face {
+        font-family: 'Warbones';
+        src: url('/fonts/Warbones.otf') format('opentype');
+      }
+
+      @font-face {
+        font-family: 'Ardillah Kafi';
+        src: url('/fonts/Ardillah Kafi.otf') format('opentype');
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Ardillah Kafi', sans-serif;
+        background: #0a0e27;
+        color: #e0e7ff;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;
+      }
+
+      /* Animated background grid */
+      .background-grid {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image:
+          linear-gradient(rgba(0, 245, 255, 0.1) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 245, 255, 0.1) 1px, transparent 1px);
+        background-size: 50px 50px;
+        animation: gridScroll 20s linear infinite;
+        z-index: -1;
+      }
+
+      @keyframes gridScroll {
+        0% { transform: translateY(0); }
+        100% { transform: translateY(50px); }
+      }
+
+      .container {
+        text-align: center;
+        padding: 2rem;
+        max-width: 800px;
+        z-index: 1;
+      }
+
+      .logo {
+        font-family: 'Warbones', sans-serif;
+        font-size: 5rem;
+        background: linear-gradient(135deg, #00f5ff, #ff006e);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 2rem;
+        text-shadow: 0 0 40px rgba(0, 245, 255, 0.5);
+      }
+
+      .merica-image {
+        width: 400px;
+        max-width: 90%;
+        height: auto;
+        margin: 0 auto 2rem;
+        filter: drop-shadow(0 0 30px rgba(255, 0, 110, 0.6));
+      }
+
+      .message {
+        font-size: 1.8rem;
+        color: #00f5ff;
+        margin-bottom: 1rem;
+        text-shadow: 0 0 20px rgba(0, 245, 255, 0.6);
+      }
+
+      .subtitle {
+        font-size: 1.2rem;
+        color: #a8b2d1;
+        margin-bottom: 0.5rem;
+      }
+
+      .details {
+        font-size: 1rem;
+        color: #a8b2d1;
+        margin-top: 2rem;
+        opacity: 0.8;
+      }
+
+      @media (max-width: 768px) {
+        .logo {
+          font-size: 3rem;
+        }
+        .merica-image {
+          width: 300px;
+        }
+        .message {
+          font-size: 1.4rem;
+        }
+        .subtitle {
+          font-size: 1rem;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <div class="background-grid"></div>
+    <div class="container">
+      <h1 class="logo">BONEYARD TEES</h1>
+      <img src="/Images/Merica/Merica_idle.png" alt="Merica" class="merica-image" />
+      <h2 class="message">UNDER CONSTRUCTION</h2>
+      <p class="subtitle">Getting some sick upgrades...</p>
+      <p class="details">We'll be back shortly. Trust me, it'll be worth the wait.</p>
+    </div>
   </body>
 </html>
