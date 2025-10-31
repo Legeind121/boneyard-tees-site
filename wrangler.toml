@@ -1,0 +1,13 @@
+# Cloudflare Worker Configuration
+# This is for the Merica AI chatbot backend
+
+name = "merica-chatbot"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# Environment variables (secrets)
+# You'll set ANTHROPIC_API_KEY via: wrangler secret put ANTHROPIC_API_KEY
+
+# When deployed, this worker will be accessible at:
+# https://merica-chatbot.<your-subdomain>.workers.dev
+# Or you can bind it to a custom route on your domain
