@@ -13,11 +13,11 @@ function App() {
   // State to track current pose
   const [currentPose, setCurrentPose] = useState(mericaPoses[0])
 
-  // Array of customer images for carousel (1 real + 4 placeholders)
+  // Array of customer images for carousel (3 real + 2 placeholders)
   const carouselImages = [
-    { src: '/Images/customer images/customer hoody 1.jpg', alt: 'Customer wearing BoneYard hoodie', isPlaceholder: false },
-    { src: '', alt: 'Placeholder 2', isPlaceholder: true },
-    { src: '', alt: 'Placeholder 3', isPlaceholder: true },
+    { src: '/Images/customer images/barber & burnout.jpg', alt: 'Barber & Burnout custom design', isPlaceholder: false },
+    { src: "/Images/customer images/Dorman '25 picnic.png", alt: "Customer design at Dorman '25 picnic", isPlaceholder: false },
+    { src: '/Images/customer images/Strongside kettlebell.png', alt: 'Strongside kettlebell custom design', isPlaceholder: false },
     { src: '', alt: 'Placeholder 4', isPlaceholder: true },
     { src: '', alt: 'Placeholder 5', isPlaceholder: true }
   ]
@@ -133,6 +133,11 @@ function App() {
           <h2>Welcome to BoneYard Tees</h2>
           <p className="tagline">T-shirts with more personality than your ex.</p>
           <p className="subtext">Premium quality, bold designs, and zero regrets. Shop now, look awesome later.</p>
+        </div>
+
+        {/* Dog Chain Divider */}
+        <div className="dog-chain-divider">
+          <img src="/Images/landing page/dog chain.png" alt="Decorative dog chain divider" />
         </div>
 
         {/* NEW Section 2: Featured Designs */}

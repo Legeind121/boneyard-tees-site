@@ -29,7 +29,7 @@
   justify-content: center;
   align-items: center;
   padding: 2rem;
-  gap: 4rem;
+  gap: 1rem;
 }
 
 .hero-section {
@@ -40,7 +40,7 @@
 .merica-character {
   width: 585px;
   height: auto;
-  margin-bottom: 1.75rem;
+  margin-bottom: 0.75rem;
   border-radius: 20px;
   box-shadow: 0 0 30px rgba(0, 245, 255, 0.3);
   transition: opacity 0.4s ease-in-out;
@@ -48,12 +48,12 @@
 
 .hero-section h2 {
   font-size: 4.5rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .hero-section .tagline {
   font-size: 2.2rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.75rem;
   color: var(--cyber-text);
   font-weight: 500;
 }
@@ -66,6 +66,34 @@
   max-width: 700px;
   margin-left: auto;
   margin-right: auto;
+}
+
+/* Dog Chain Divider */
+.dog-chain-divider {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 2rem 0;
+  padding: 0 2rem;
+}
+
+.dog-chain-divider img {
+  width: 75%;
+  max-width: 900px;
+  height: auto;
+  filter: drop-shadow(0 0 8px rgba(0, 245, 255, 0.8))
+          drop-shadow(0 0 15px rgba(0, 245, 255, 0.6))
+          drop-shadow(0 0 25px rgba(0, 245, 255, 0.4))
+          brightness(1.1);
+  transition: filter 0.3s ease;
+}
+
+.dog-chain-divider img:hover {
+  filter: drop-shadow(0 0 10px rgba(0, 245, 255, 1))
+          drop-shadow(0 0 20px rgba(0, 245, 255, 0.8))
+          drop-shadow(0 0 35px rgba(0, 245, 255, 0.6))
+          brightness(1.3);
 }
 
 /* CTA Section */
@@ -303,13 +331,13 @@
   }
 
   .main-content {
-    gap: 2rem;
+    gap: 0.5rem;
     padding: 1rem;
   }
 
   .merica-character {
     width: 364px;
-    margin-bottom: 1.25rem;
+    margin-bottom: 0.65rem;
   }
 
   .hero-section h2 {
@@ -337,6 +365,15 @@
   .cta-button {
     font-size: 1.2rem;
     padding: 0.8rem 2rem;
+  }
+
+  /* Dog Chain Divider - Tablet */
+  .dog-chain-divider {
+    margin: 1.5rem 0;
+  }
+
+  .dog-chain-divider img {
+    width: 80%;
   }
 
   /* Featured Section - Stack vertically on tablet */
@@ -381,7 +418,7 @@
 
   .merica-character {
     width: 286px;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
   }
 
   .hero-section h2 {
@@ -408,6 +445,15 @@
   .cta-button {
     font-size: 1rem;
     padding: 0.7rem 1.5rem;
+  }
+
+  /* Dog Chain Divider - Mobile */
+  .dog-chain-divider {
+    margin: 1rem 0;
+  }
+
+  .dog-chain-divider img {
+    width: 85%;
   }
 
   /* Featured Section - Mobile */

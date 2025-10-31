@@ -71,13 +71,30 @@ public/
 - Smooth 0.4s opacity fade transitions between poses
 - Images preloaded on component mount to prevent flashing
 - Current pose tracked in state: `currentPose`
-- Spacing below character: `1.75rem` desktop, `1.25rem` tablet, `1rem` mobile
+- Spacing below character: `0.75rem` desktop, `0.65rem` tablet, `0.5rem` mobile
+
+**Hero Section Text Spacing:**
+- `.hero-section h2` (Welcome heading) margin-bottom: `0.5rem`
+- `.hero-section .tagline` margin-bottom: `0.75rem`
+- These values have been reduced from original 1.5rem to create tighter, more cohesive layout
+
+**Dog Chain Divider (Between Sections 1 & 2):**
+- Horizontal decorative element spanning 75% of screen width (80% tablet, 85% mobile)
+- Image: `/Images/landing page/dog chain.png`
+- Cyan neon glow effect (3-layer drop-shadow matching other decorative elements)
+- Hover effect intensifies glow
+- Positioned between hero section and featured designs carousel
+- Margin: `2rem` vertical (desktop), `1.5rem` (tablet), `1rem` (mobile)
 
 **Featured Designs Section (Section 3):**
 - Two-column layout (side-by-side on desktop, stacked on mobile/tablet)
 - **Left Column - "Featured Customer Designs":**
   - Title: Cyan color with multi-layer glow and faint neon outline
-  - Card deck-style carousel with 5 images (1 real customer photo + 4 gray placeholders)
+  - Card deck-style carousel with 5 images (3 real customer photos + 2 gray placeholders)
+  - **Current customer images:**
+    - `barber & burnout.jpg` (image 1)
+    - `Dorman '25 picnic.png` (image 2)
+    - `Strongside kettlebell.png` (image 3)
   - Auto-rotation: Changes every 5 seconds
   - Manual navigation: Left/right arrow buttons
   - When arrows clicked, auto-rotation pauses for 10 seconds then resumes
@@ -111,8 +128,15 @@ public/
 - **Available (not in use):** Excited, Grumpy, Thinking, Wave, pointing
 - Managed via `mericaPoses` array in App.jsx
 
-**Line Art:** `/Images/landing page/` - dog bone.png, paw.png, dog tags.png
+**Line Art:** `/Images/landing page/`
+- Background decorations: dog bone.png, paw.png, dog tags.png
+- Divider: dog chain.png (used between sections 1 & 2)
+
 **Customer Photos:** `/Images/customer images/`
+- barber & burnout.jpg
+- Dorman '25 picnic.png
+- Strongside kettlebell.png
+
 **Logos:** `/Images/logos/`
 
 ## Responsive Sizing Specifications
@@ -123,9 +147,13 @@ public/
 - Mobile (480px): `2.6rem` font-size
 
 **Merica Character (.merica-character):**
-- Desktop: `585px` width, `1.75rem` margin-bottom
-- Tablet (768px): `364px` width, `1.25rem` margin-bottom
-- Mobile (480px): `286px` width, `1rem` margin-bottom
+- Desktop: `585px` width, `0.75rem` margin-bottom
+- Tablet (768px): `364px` width, `0.65rem` margin-bottom
+- Mobile (480px): `286px` width, `0.5rem` margin-bottom
+
+**Section Spacing (.main-content gap):**
+- Desktop: `1rem` (reduced from original 4rem for tighter layout)
+- Tablet/Mobile (768px): `0.5rem` (reduced from original 2rem)
 
 ## Important Notes
 
@@ -136,3 +164,28 @@ public/
 - Owner is non-technical - explain changes clearly
 - **DO NOT** modify animation timing (Merica poses or carousel rotation) without discussing with owner first
 - Multiple independent animations run simultaneously (Merica + carousel) - both use separate state and useEffect hooks
+
+## Troubleshooting & Lessons Learned
+
+**Image Path Issues:**
+- **ALWAYS verify image filenames match exactly** - if carousel images aren't loading, check that the filename in `carouselImages` array matches the actual file in `/Images/customer images/`
+- Windows file paths are case-insensitive but React/Vite asset paths ARE case-sensitive in production
+- Special characters in filenames (like `&` in `barber & burnout.jpg`) are fine in paths, just use exact filename
+
+**Carousel Display Problems:**
+- If images show through each other or don't display properly, check:
+  1. Image paths are correct and images exist at specified location
+  2. `.carousel-card` z-index stacking is working (inline styles control this)
+  3. `.carousel-cards` has proper dimensions and doesn't have conflicting overflow properties
+  4. Don't add `background-color` to `.carousel-card` - causes visibility issues
+  5. Don't override z-index with `!important` on `.carousel-card.active` - breaks stacking
+
+**CSS Spacing Changes:**
+- When reducing spacing, do it incrementally and check results before continuing
+- The `.main-content gap` property controls spacing between ALL main sections (hero, featured, CTA)
+- Hero section text spacing is controlled by individual margin-bottom values on h2, .tagline, etc.
+
+**Development Workflow:**
+- Run `npm run dev` and check browser console for 404 errors when adding new images
+- Use browser DevTools to inspect computed styles when debugging layout issues
+- If making multiple related changes, test incrementally rather than all at once
