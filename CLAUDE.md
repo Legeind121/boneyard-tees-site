@@ -29,21 +29,21 @@ npm run lint     # Check code quality
 ```
 src/
   main.jsx                    # Entry point
-  App.jsx                     # Main landing page component
+  App.jsx                     # Main landing page component (has ChatWidget imported)
   App.css                     # Component styles
   index.css                   # Global styles, cyberpunk colors, fonts
   components/
     ChatWidget.jsx            # Merica AI chatbot component
-    ChatWidget.css            # Chatbot styling
+    ChatWidget.css            # Chatbot styling (cyberpunk theme)
 public/
   Images/                     # All images (Merica character, customer photos, logos, line art)
   fonts/                      # Warbones, Ardillah Kafi fonts
 worker.js                     # Cloudflare Worker backend for chatbot
 wrangler.toml                 # Cloudflare Worker configuration
 .env                          # Environment variables (ANTHROPIC_API_KEY) - NEVER COMMIT
-index.html                    # Vite entry point OR maintenance page
-index.html.backup             # Backup of full React site
+index.html                    # Vite entry point
 CHATBOT-SETUP.md              # Complete chatbot deployment guide
+CLAUDE.md                     # This file - project documentation for Claude
 ```
 
 **Asset Paths:** Reference public files as `/Images/folder/file.ext` or `/fonts/file.otf`
@@ -52,70 +52,31 @@ CHATBOT-SETUP.md              # Complete chatbot deployment guide
 
 **CRITICAL:** Interactive AI chatbot powered by Claude AI (Haiku 4.5) - allows customers to chat with Merica mascot.
 
-### 🚧 Current Development Status (Updated: 2025-10-31)
+### ✅ Current Status: LIVE AND WORKING
 
-**PROGRESS:**
-- ✅ Cloudflare Worker deployed: `https://merica-chatbot.boneyardtees.workers.dev`
-- ✅ Anthropic API key secured on Cloudflare (via `wrangler secret put`)
-- ✅ ChatWidget component created and integrated into App.jsx
-- ✅ Cyberpunk styling matches site aesthetic
-- ✅ Chat bubble visible in bottom-right corner
-- ❌ **BLOCKED:** Worker returning errors - chatbot shows "Damn, something broke. Try again in a sec."
+**Latest Update (2025-10-31):**
+- ✅ Chatbot fully functional and deployed to production
+- ✅ Worker endpoint: `https://merica-chatbot.boneyardtees.workers.dev`
+- ✅ Using correct Claude model: `claude-haiku-4-5-20251001`
+- ✅ Personality tuned with natural conversation endings
+- ✅ Live on boneyardtees.com
 
-**WHERE WE LEFT OFF:**
-- Chat widget UI is working (bubble, window, message sending)
-- Messages are reaching the worker (network request succeeds)
-- Worker is crashing or returning errors when calling Claude API
-- **NEXT STEP:** Debug worker logs using `wrangler tail` to identify the error
-  - Possible issues: Wrong model name, SDK bundling problem, API authentication
+**Recent Improvements:**
+- Fixed model name error (was using invalid `claude-haiku-4-20250514`, now using correct `claude-haiku-4-5-20251001`)
+- Conversation flow optimization: Better natural endings with engaging CTAs ("Ready for some fresh drip?", "Want some new diggs?")
+- System prompt refinements to avoid awkward "anything else?" loops
 
-**CRITICAL SECURITY - .env FILE:**
-- ✅ `.env` file is already protected by `.gitignore` (added on 2025-10-31)
-- ✅ Safe to commit and push all OTHER files to git
-- ✅ API key is stored as secret on Cloudflare Worker (never exposed in code)
-- **Verification:** Run `git status` - `.env` should NOT appear in untracked files
-
-**GIT PUSH vs LIVE SITE DEPLOYMENT:**
-
-**How It Works:**
-1. **Git Push** → Only updates GitHub repository (code storage)
-2. **Cloudflare Pages** → Automatically rebuilds and deploys when it detects new commits
-3. **Your Live Site** → Updates ~1 minute after Cloudflare Pages rebuilds
-
-**To Push Code WITHOUT Updating Live Site:**
-- **Option 1:** Pause Cloudflare Pages deployments:
-  1. Go to Cloudflare Dashboard → Pages → boneyardtees.com
-  2. Settings → Builds & deployments
-  3. Toggle "Pause deployments"
-  4. Now you can `git push` safely - live site won't update
-  5. Re-enable when ready to deploy
-
-- **Option 2:** Use a development branch:
-  1. Create branch: `git checkout -b chatbot-dev`
-  2. Push to dev branch: `git push origin chatbot-dev`
-  3. Test on Cloudflare preview URL (auto-created for branches)
-  4. Merge to `main` only when ready for production
-
-**Current Safe Approach:**
-- Live site at boneyardtees.com is still showing the pre-chatbot version
-- You can `git push` to save progress without affecting live site (Cloudflare Pages may auto-deploy though)
-- Recommend pausing deployments until chatbot is fully working
-
-**IMMEDIATE NEXT STEPS:**
-1. Debug worker error:
-   - Run `wrangler tail` in terminal
-   - Send test message in chat
-   - Check logs for error details
-2. Fix worker issue (likely model name or SDK problem)
-3. Test Merica's personality
-4. Decide deployment strategy (pause Cloudflare Pages or use dev branch)
+**CRITICAL SECURITY:**
+- `.env` file protected by `.gitignore` - API keys never committed to git
+- `ANTHROPIC_API_KEY` stored as encrypted Cloudflare Worker secret
+- `CLOUDFLARE_API_TOKEN` stored in local `.env` for wrangler deployments
 
 ### Architecture
 
 **Backend:** Cloudflare Worker (serverless)
 - `worker.js` - API endpoint that communicates with Claude API
 - `wrangler.toml` - Cloudflare Worker configuration
-- **Endpoint:** Will be deployed to `https://merica-chatbot.<subdomain>.workers.dev` or custom domain
+- **Endpoint:** Deployed to `https://merica-chatbot.boneyardtees.workers.dev`
 
 **Frontend:** React component
 - `src/components/ChatWidget.jsx` - Chat bubble and window component
@@ -123,9 +84,11 @@ CHATBOT-SETUP.md              # Complete chatbot deployment guide
 - **Integration:** Import and add `<ChatWidget />` to App.jsx
 
 **Environment Variables:**
-- `.env` - Contains `ANTHROPIC_API_KEY` (secured, never commit to git)
+- `.env` - Contains sensitive credentials (NEVER commit to git):
+  - `ANTHROPIC_API_KEY` - Claude API access for chatbot
+  - `CLOUDFLARE_API_TOKEN` - Wrangler CLI authentication for deployments
 - `.gitignore` - Protects `.env`, `.env.local`, `.env.*.local` from git commits
-- API key is stored as encrypted secret on Cloudflare Worker via `wrangler secret put ANTHROPIC_API_KEY`
+- `ANTHROPIC_API_KEY` is also stored as encrypted secret on Cloudflare Worker via `wrangler secret put ANTHROPIC_API_KEY`
 
 ### Merica's Personality (Rated-R Badass)
 
@@ -173,57 +136,31 @@ CHATBOT-SETUP.md              # Complete chatbot deployment guide
 - Update `API_ENDPOINT` constant in ChatWidget.jsx after deploying worker
 - Format: `https://merica-chatbot.<subdomain>.workers.dev` or custom domain
 
-### Deployment
+### Deployment Status
 
-**Full deployment guide:** See `CHATBOT-SETUP.md`
+**Already Completed:**
+- ✅ Wrangler CLI installed (v4.45.3)
+- ✅ Worker deployed to: `https://merica-chatbot.boneyardtees.workers.dev`
+- ✅ API key stored as Cloudflare secret
+- ✅ ChatWidget integrated into App.jsx
+- ✅ Code pushed to GitHub (main branch)
+- ✅ Cloudflare Pages auto-deploys from GitHub
 
-**Quick deployment steps:**
-1. Install Wrangler CLI: `npm install -g wrangler`
-2. Login: `wrangler login`
-3. Install dependencies: `npm install @anthropic-ai/sdk`
-4. Deploy worker: `wrangler deploy`
-5. Set API key: `wrangler secret put ANTHROPIC_API_KEY`
-6. Update `API_ENDPOINT` in ChatWidget.jsx with worker URL
-7. Import ChatWidget in App.jsx
-8. Test locally: `npm run dev`
-9. Deploy: `git push`
+**To Redeploy Worker:**
+```bash
+wrangler deploy
+```
+
+**To Update API Key Secret:**
+```bash
+wrangler secret put ANTHROPIC_API_KEY
+```
+
+**Full deployment guide:** See [CHATBOT-SETUP.md](CHATBOT-SETUP.md)
 
 **Cost Monitoring:**
-- Haiku 4.5 pricing: ~$0.0003 per chat interaction
-- Light traffic (100 chats/day): ~$1-3/month
-- Medium traffic (1,000 chats/day): ~$10-30/month
-- Set budget alerts at [console.anthropic.com/settings/limits](https://console.anthropic.com/settings/limits)
-
-### Maintenance Mode
-
-**Current Status:** Site can be toggled between full React app and maintenance page
-
-**Files:**
-- `index.html` - Currently points to Vite React app OR maintenance page (depending on deployment)
-- `index.html.backup` - Backup of full React site (restore with `cp index.html.backup index.html`)
-
-**Maintenance Page Features:**
-- Standalone HTML (no React bundle)
-- Displays: "UNDER CONSTRUCTION" with Merica idle pose
-- Cyberpunk grid background animation
-- Cyan/pink neon typography matching brand
-- Mobile responsive
-
-**Toggle to Maintenance:**
-```bash
-# Save current site
-cp index.html index.html.backup
-
-# Create simple maintenance page (replace index.html content)
-# Then deploy
-git add index.html && git commit -m "Enable maintenance mode" && git push
-```
-
-**Restore Full Site:**
-```bash
-cp index.html.backup index.html
-git add index.html && git commit -m "Restore full site" && git push
-```
+- Haiku 4.5: ~$0.0003 per chat (~$3-5/month for 100 chats/day)
+- Set budget alerts: [console.anthropic.com/settings/limits](https://console.anthropic.com/settings/limits)
 
 ### Important Notes
 
@@ -424,3 +361,11 @@ git add index.html && git commit -m "Restore full site" && git push
 - Run `npm run dev` and check browser console for 404 errors when adding new images
 - Use browser DevTools to inspect computed styles when debugging layout issues
 - If making multiple related changes, test incrementally rather than all at once
+
+**Cloudflare Worker & Chatbot Issues:**
+- **Model Name Errors:** Always use exact model IDs from Anthropic documentation (e.g., `claude-haiku-4-5-20251001`). Incorrect model names cause 500 server errors. Check [https://docs.claude.com/en/docs/about-claude/models](https://docs.claude.com/en/docs/about-claude/models) for current model names.
+- **Wrangler Authentication:** Store `CLOUDFLARE_API_TOKEN` in `.env` file to prevent login prompts during `wrangler deploy` or `wrangler tail` commands. Set with: `$env:CLOUDFLARE_API_TOKEN="your_token"` (PowerShell) or `export CLOUDFLARE_API_TOKEN="your_token"` (bash).
+- **Debugging Worker Errors:** Use `wrangler tail --format pretty` to view real-time logs when chatbot isn't responding correctly. Send test message in browser and watch console output for actual error messages from Claude API.
+- **Testing Worker Locally:** Use `wrangler dev` to test worker locally before deploying to production. Worker runs at `http://localhost:8787`.
+- **API Key Security:** Never commit `.env` to git. `ANTHROPIC_API_KEY` is stored as encrypted secret on Cloudflare via `wrangler secret put ANTHROPIC_API_KEY`.
+- **Deployment:** After making changes to `worker.js`, deploy with `wrangler deploy`. Changes are live immediately.
