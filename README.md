@@ -124,8 +124,8 @@ wrangler deploy
 
 ## 🎨 Features
 
-- **Animated Merica Character** - Random pose changes
-- **Dual Carousels** - Featured customer & shop designs
+- **Animated Merica Character** - Random pose changes with interactive speech bubble prompts
+- **Side-by-Side Carousels** - Featured customer & shop designs with converging card deck effects
 - **How It Works Section** - 3 themed process flows
 - **Cyberpunk Design** - Neon colors, gradients, glows
 - **Fully Responsive** - Mobile, tablet, desktop

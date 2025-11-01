@@ -69,7 +69,7 @@ Centralized configuration for all timing, animation, and path constants. **ALWAY
 - `CAROUSEL_PAUSE_DURATION` = 10000ms
 
 **Carousel Animation:**
-- `CARD_HORIZONTAL_OFFSET` = 250px
+- `CARD_HORIZONTAL_OFFSET` = 175px (reduced for side-by-side layout)
 - `CARD_SCALE_REDUCTION` = 0.08
 - `CARD_ROTATION_DEGREES` = 3
 - `CARD_VERTICAL_OFFSET` = 5px
@@ -78,6 +78,13 @@ Centralized configuration for all timing, animation, and path constants. **ALWAY
 **Chat Configuration:**
 - `MAX_CHAT_MESSAGES` = 50 (history limit)
 - `CHAT_CONVERSATION_CONTEXT_LENGTH` = 10 (sent to API)
+
+**Speech Bubble (Merica Click Prompt):**
+- `SPEECH_BUBBLE_FIRST_DELAY` = 3000ms (first bubble appears after 3 seconds)
+- `SPEECH_BUBBLE_INTERVAL` = 12000ms (12 seconds between subsequent bubbles)
+- `SPEECH_BUBBLE_DURATION` = 4000ms (bubble stays visible for 4 seconds)
+- `SPEECH_BUBBLE_MAX_CYCLES` = 3 (shows 3 times max before stopping)
+- `SPEECH_BUBBLE_MESSAGES` = Array of 3 rotating messages
 
 **Image Paths:**
 - `IMAGE_PATHS.MERICA.*` - Merica character poses
@@ -332,6 +339,36 @@ wrangler secret put ANTHROPIC_API_KEY
 - Current pose tracked in state: `currentPose`
 - Image fallback handler returns to Idle if pose image fails to load
 - Spacing below character: `0.75rem` desktop, `0.65rem` tablet, `0.5rem` mobile
+- **Clickable to open chat:** `onClick` and keyboard handlers (`onKeyDown`) to open ChatWidget
+- `aria-label="Chat with Merica"` for accessibility
+
+### Merica Speech Bubble
+
+**Purpose:** Prompts users to click Merica to start chatting
+
+**Behavior:**
+- Appears automatically after page load to increase chat discoverability
+- First bubble: 3 seconds after page load (`SPEECH_BUBBLE_FIRST_DELAY`)
+- Subsequent bubbles: 12 seconds apart (`SPEECH_BUBBLE_INTERVAL`)
+- Each bubble visible for 4 seconds (`SPEECH_BUBBLE_DURATION`)
+- Stops after 3 cycles OR when user clicks Merica (`SPEECH_BUBBLE_MAX_CYCLES`)
+
+**Messages (rotating):**
+1. "Yo, click me to chat!"
+2. "Need custom tees? Talk to me."
+3. "I don't bite... much. Click me!"
+
+**Styling:**
+- Desktop/Tablet: Positioned to the right of Merica with tail pointing left
+- Mobile: Positioned above Merica with tail pointing down (prevents off-screen overflow)
+- Cyberpunk theme: cyan/pink gradient border, neon glow effects
+- z-index: 1000 (ensures visibility above other elements)
+- Fade-in animation for smooth appearance
+
+**Implementation:**
+- State: `speechBubbleVisible`, `hasClickedMerica`, `bubbleCycleCount`
+- useEffect hook with timeout management and cleanup
+- Conditionally rendered JSX element inside `.merica-character-wrapper`
 
 ### Hero Section
 
@@ -352,12 +389,14 @@ wrangler secret put ANTHROPIC_API_KEY
 
 ### Featured Designs Section
 
-- **Stacked vertical layout** with 3rem gap between carousels
+- **Side-by-side layout** on desktop (two-column grid), vertical stacking on tablet/mobile
+- Gap: 2rem between carousels (desktop), 2rem (tablet/mobile)
 - Both carousels run **independently** for optimal performance
 - Both use identical carousel component structure with opposite animations
 - **Animation constants:** All values pulled from `constants.js` (CARD_HORIZONTAL_OFFSET, etc.)
+- **Card sizes reduced by 30%** for better desktop viewing (both carousels visible without scrolling)
 
-**"Featured Customer Designs" Carousel (Top):**
+**"Featured Customer Designs" Carousel (Left):**
 - Title: Cyan color with multi-layer glow and faint neon outline
 - **Cyan theme:** Navigation buttons and indicators use cyan (`--cyber-cyan`)
 - Card deck-style carousel with 5 images (3 real customer photos + 2 gray placeholders)
@@ -365,11 +404,16 @@ wrangler secret put ANTHROPIC_API_KEY
   - `barber & burnout.jpg` (image 1)
   - `Dorman '25 picnic.png` (image 2)
   - `Strongside kettlebell.png` (image 3)
-- **Animation:** Cards slide **RIGHT** (left to right) with dramatic "card dealer" effect
-  - Uses `CARD_HORIZONTAL_OFFSET` (250px), `CARD_ROTATION_DEGREES` (3°)
+- **Card sizes:**
+  - Desktop: 350px × 420px (reduced from 500px × 600px)
+  - Tablet: 280px × 350px (reduced from 400px × 500px)
+  - Mobile: 210px × 280px (reduced from 300px × 400px)
+- **Animation:** Deck fans **INWARD to the LEFT** (toward center) with dramatic "card dealer" effect
+  - Uses negative `CARD_HORIZONTAL_OFFSET` (-175px), negative `CARD_ROTATION_DEGREES` (-3°)
   - `CARD_SCALE_REDUCTION` (0.08), `CARD_VERTICAL_OFFSET` (5px)
   - Inactive cards use `CAROUSEL_INACTIVE_OPACITY` (0.3)
-- **Horizontal offset:** Entire carousel offset **9rem to the left** (`.customer-carousel-column`)
+  - Back cards spread LEFT toward shop carousel for converging effect
+- **Horizontal offset:** Entire carousel offset **6rem to the right** toward center (`.customer-carousel-column`: `margin-right: -6rem`)
 - Auto-rotation: Changes every `CAROUSEL_AUTO_ROTATE_INTERVAL` (5 seconds)
 - Manual navigation: Left/right arrow buttons with `aria-label` attributes
 - When arrows clicked, auto-rotation pauses for `CAROUSEL_PAUSE_DURATION` (10 seconds)
@@ -382,14 +426,19 @@ wrangler secret put ANTHROPIC_API_KEY
 - **Images:** Lazy loaded with error fallback (shows placeholder if image fails)
 - Carousel images array in App.jsx: `carouselImages` (5 objects with src, alt, isPlaceholder properties)
 
-**"Featured Shop Designs" Carousel (Bottom):**
+**"Featured Shop Designs" Carousel (Right):**
 - Title: Purple color with multi-layer glow and faint neon outline
 - **Purple theme:** Navigation buttons and indicators use purple (`--cyber-purple`) via `.shop-theme` class
 - Card deck-style carousel with 5 placeholder cards (all gray "Coming Soon" boxes for now)
-- **Animation:** Cards slide **LEFT** (right to left) - opposite of customer carousel
-  - Uses negative `CARD_HORIZONTAL_OFFSET` (-250px), negative `CARD_ROTATION_DEGREES` (-3°)
+- **Card sizes:**
+  - Desktop: 350px × 420px (reduced from 500px × 600px)
+  - Tablet: 280px × 350px (reduced from 400px × 500px)
+  - Mobile: 210px × 280px (reduced from 300px × 400px)
+- **Animation:** Deck fans **INWARD to the RIGHT** (toward center) - opposite of customer carousel
+  - Uses positive `CARD_HORIZONTAL_OFFSET` (+175px), positive `CARD_ROTATION_DEGREES` (+3°)
   - Same scale reduction and vertical offset as customer carousel
-- **Horizontal offset:** Entire carousel offset **9rem to the right** (`.shop-carousel-column`)
+  - Back cards spread RIGHT toward customer carousel for converging effect
+- **Horizontal offset:** Entire carousel offset **6rem to the left** toward center (`.shop-carousel-column`: `margin-left: -6rem`)
 - Auto-rotation: Changes every `CAROUSEL_AUTO_ROTATE_INTERVAL` (5 seconds, independent of customer carousel)
 - Manual navigation: Left/right arrow buttons (purple) with `aria-label`
 - When arrows clicked, auto-rotation pauses for `CAROUSEL_PAUSE_DURATION` (10 seconds)
@@ -399,6 +448,8 @@ wrangler secret put ANTHROPIC_API_KEY
 - **Images:** Lazy loaded with error fallback
 - Carousel images array in App.jsx: `shopCarouselImages` (5 placeholder objects)
 - Ready for future shop product images
+
+**Key Design Change:** Front cards now positioned closer together in the center with deck effects fanning INWARD toward each other (creating a converging visual effect) instead of spreading outward.
 
 ### How It Works Section
 

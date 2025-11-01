@@ -20,7 +20,7 @@ export const CAROUSEL_PAUSE_DURATION = 10000; // 10 seconds after manual navigat
 // Carousel Animation Constants
 // ========================================
 
-export const CARD_HORIZONTAL_OFFSET = 250; // px - horizontal offset per card position
+export const CARD_HORIZONTAL_OFFSET = 175; // px - horizontal offset per card position (reduced for side-by-side layout)
 export const CARD_SCALE_REDUCTION = 0.08; // 8% scale reduction per position
 export const CARD_ROTATION_DEGREES = 3; // degrees of rotation per position
 export const CARD_VERTICAL_OFFSET = 5; // px - vertical offset per position
@@ -34,6 +34,22 @@ export const CAROUSEL_INACTIVE_OPACITY = 0.3; // 30% opacity for background card
 
 export const MAX_CHAT_MESSAGES = 50; // Maximum messages to store in chat history
 export const CHAT_CONVERSATION_CONTEXT_LENGTH = 10; // Number of messages sent to API for context
+
+// ========================================
+// Speech Bubble Constants
+// ========================================
+
+export const SPEECH_BUBBLE_FIRST_DELAY = 3000; // 3 seconds - delay before first bubble appears
+export const SPEECH_BUBBLE_INTERVAL = 12000; // 12 seconds between subsequent bubble appearances
+export const SPEECH_BUBBLE_DURATION = 4000; // 4 seconds - how long bubble stays visible
+export const SPEECH_BUBBLE_MAX_CYCLES = 3; // Show bubble 3 times max before stopping
+
+// Rotating messages for speech bubble (one per cycle)
+export const SPEECH_BUBBLE_MESSAGES = [
+  "Yo, click me to chat!",
+  "Need custom tees? Talk to me.",
+  "I don't bite... much. Click me!"
+];
 
 // ========================================
 // Image Configuration

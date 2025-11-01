@@ -59,6 +59,7 @@
 }
 
 .merica-character-wrapper {
+  position: relative;
   display: inline-block;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -79,6 +80,69 @@
   border-radius: 20px;
   box-shadow: 0 0 30px rgba(0, 245, 255, 0.3);
   transition: all 0.4s ease-in-out;
+}
+
+/* Speech Bubble */
+.speech-bubble {
+  position: absolute;
+  top: 50%;
+  right: -320px;
+  transform: translateY(-50%);
+  background: linear-gradient(135deg, rgba(10, 14, 39, 0.95), rgba(26, 31, 58, 0.95));
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 15px;
+  padding: 0.75rem 1.25rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--cyber-text);
+  white-space: nowrap;
+  box-shadow:
+    0 0 20px rgba(0, 245, 255, 0.5),
+    0 0 40px rgba(255, 0, 110, 0.3),
+    inset 0 0 20px rgba(0, 245, 255, 0.1);
+  animation: bubbleFadeIn 0.4s ease-in-out;
+  z-index: 1000;
+}
+
+/* Gradient border effect */
+.speech-bubble::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-pink));
+  border-radius: 15px;
+  z-index: -1;
+}
+
+/* Speech bubble tail pointing left to Merica */
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-right: 10px solid rgba(10, 14, 39, 0.95);
+  filter: drop-shadow(-5px 0 10px rgba(0, 245, 255, 0.3));
+}
+
+/* Fade in/out animation */
+@keyframes bubbleFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-50%) translateX(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
 }
 
 .hero-section h2 {
@@ -132,13 +196,13 @@
           brightness(1.3);
 }
 
-/* Featured Section - Stacked Layout */
+/* Featured Section - Side-by-Side Layout */
 .featured-section {
   max-width: 1200px;
   width: 100%;
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 3rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
   margin: 2rem 0;
 }
 
@@ -149,11 +213,11 @@
 }
 
 .customer-carousel-column {
-  margin-left: -9rem;
+  margin-right: -6rem;
 }
 
 .shop-carousel-column {
-  margin-right: -9rem;
+  margin-left: -6rem;
 }
 
 .featured-title {
@@ -196,8 +260,8 @@
 .carousel-container {
   position: relative;
   width: 100%;
-  max-width: 500px;
-  height: 600px;
+  max-width: 350px;
+  height: 420px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -329,8 +393,8 @@
 /* Shop Designs Placeholder */
 .shop-placeholder {
   width: 100%;
-  max-width: 500px;
-  height: 600px;
+  max-width: 350px;
+  height: 420px;
   background-color: var(--cyber-bg-secondary);
   border: 2px solid var(--cyber-purple);
   border-radius: 20px;
@@ -353,6 +417,12 @@
   .merica-character {
     width: 364px;
     margin-bottom: 0.65rem;
+  }
+
+  .speech-bubble {
+    right: -280px;
+    font-size: 1rem;
+    padding: 0.65rem 1.1rem;
   }
 
   .hero-section h2 {
@@ -394,7 +464,7 @@
   /* Featured Section - Stack vertically on tablet */
   .featured-section {
     grid-template-columns: 1fr;
-    gap: 3rem;
+    gap: 2rem;
     padding: 0 1rem;
   }
 
@@ -403,13 +473,13 @@
   }
 
   .carousel-container {
-    max-width: 400px;
-    height: 500px;
+    max-width: 280px;
+    height: 350px;
   }
 
   .shop-placeholder {
-    max-width: 400px;
-    height: 500px;
+    max-width: 280px;
+    height: 350px;
   }
 
   .carousel-nav-prev {
@@ -434,6 +504,28 @@
   .merica-character {
     width: 286px;
     margin-bottom: 0.5rem;
+  }
+
+  .speech-bubble {
+    top: -70px;
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.9rem;
+    padding: 0.6rem 1rem;
+  }
+
+  /* Change tail to point down on mobile */
+  .speech-bubble::after {
+    left: 50%;
+    top: auto;
+    bottom: -10px;
+    transform: translateX(-50%);
+    border-top: 10px solid rgba(10, 14, 39, 0.95);
+    border-right: none;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: none;
   }
 
   .hero-section h2 {
@@ -482,13 +574,13 @@
   }
 
   .carousel-container {
-    max-width: 300px;
-    height: 400px;
+    max-width: 210px;
+    height: 280px;
   }
 
   .shop-placeholder {
-    max-width: 300px;
-    height: 400px;
+    max-width: 210px;
+    height: 280px;
   }
 
   .placeholder-text {

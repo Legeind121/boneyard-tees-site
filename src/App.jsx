@@ -12,6 +12,11 @@ import {
   CARD_ROTATION_DEGREES,
   CARD_VERTICAL_OFFSET,
   CAROUSEL_INACTIVE_OPACITY,
+  SPEECH_BUBBLE_FIRST_DELAY,
+  SPEECH_BUBBLE_INTERVAL,
+  SPEECH_BUBBLE_DURATION,
+  SPEECH_BUBBLE_MAX_CYCLES,
+  SPEECH_BUBBLE_MESSAGES,
 } from './constants'
 
 // Lazy load ChatWidget for better initial page load performance
@@ -34,6 +39,12 @@ function App() {
 
   // State to track chat open/close
   const [isChatOpen, setIsChatOpen] = useState(false)
+
+  // State for speech bubble animation
+  const [speechBubbleVisible, setSpeechBubbleVisible] = useState(false)
+  const [hasClickedMerica, setHasClickedMerica] = useState(false)
+  const [bubbleCycleCount, setBubbleCycleCount] = useState(0)
+  const speechBubbleTimeoutRef = useRef(null)
 
   // State to track broken images (by index)
   const [brokenCustomerImages, setBrokenCustomerImages] = useState(new Set())
@@ -208,6 +219,38 @@ function App() {
     return () => clearInterval(intervalId)
   }, [isShopCarouselPaused, shopCarouselImages.length])
 
+  // Speech bubble animation logic
+  useEffect(() => {
+    // Stop if user has clicked Merica or exceeded max cycles
+    if (hasClickedMerica || bubbleCycleCount >= SPEECH_BUBBLE_MAX_CYCLES) {
+      return
+    }
+
+    // Use shorter delay for first bubble, longer interval for subsequent bubbles
+    const delay = bubbleCycleCount === 0 ? SPEECH_BUBBLE_FIRST_DELAY : SPEECH_BUBBLE_INTERVAL
+
+    // Show bubble after delay/interval
+    const showBubbleTimeout = setTimeout(() => {
+      setSpeechBubbleVisible(true)
+
+      // Hide bubble after duration and increment cycle count
+      const hideBubbleTimeout = setTimeout(() => {
+        setSpeechBubbleVisible(false)
+        setBubbleCycleCount(prev => prev + 1)
+      }, SPEECH_BUBBLE_DURATION)
+
+      speechBubbleTimeoutRef.current = hideBubbleTimeout
+    }, delay)
+
+    // Cleanup timeouts on unmount or dependency change
+    return () => {
+      clearTimeout(showBubbleTimeout)
+      if (speechBubbleTimeoutRef.current) {
+        clearTimeout(speechBubbleTimeoutRef.current)
+      }
+    }
+  }, [bubbleCycleCount, hasClickedMerica])
+
   // Carousel navigation functions
   const nextSlide = () => {
     setIsCarouselPaused(true)
@@ -303,13 +346,17 @@ function App() {
         <div className="hero-section">
           <div
             className="merica-character-wrapper"
-            onClick={() => setIsChatOpen(true)}
+            onClick={() => {
+              setIsChatOpen(true);
+              setHasClickedMerica(true);
+            }}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 setIsChatOpen(true);
+                setHasClickedMerica(true);
               }
             }}
             aria-label="Chat with Merica"
@@ -325,6 +372,12 @@ function App() {
                 }
               }}
             />
+            {/* Speech bubble that appears periodically */}
+            {speechBubbleVisible && (
+              <div className="speech-bubble">
+                {SPEECH_BUBBLE_MESSAGES[bubbleCycleCount]}
+              </div>
+            )}
           </div>
           <h2>Welcome to BoneYard Tees</h2>
           <p className="tagline">T-shirts with more personality than your ex.</p>
@@ -354,7 +407,7 @@ function App() {
                       className={`carousel-card ${position === 0 ? 'active' : ''}`}
                       style={{
                         zIndex: carouselImages.length - position,
-                        transform: `translateX(${position * CARD_HORIZONTAL_OFFSET}px) translateY(${position * CARD_VERTICAL_OFFSET}px) scale(${1 - position * CARD_SCALE_REDUCTION}) rotate(${position * CARD_ROTATION_DEGREES}deg)`,
+                        transform: `translateX(${position * -CARD_HORIZONTAL_OFFSET}px) translateY(${position * CARD_VERTICAL_OFFSET}px) scale(${1 - position * CARD_SCALE_REDUCTION}) rotate(${position * -CARD_ROTATION_DEGREES}deg)`,
                         opacity: position === 0 ? 1 : CAROUSEL_INACTIVE_OPACITY
                       }}
                     >
@@ -424,7 +477,7 @@ function App() {
                       className={`carousel-card ${position === 0 ? 'active' : ''}`}
                       style={{
                         zIndex: shopCarouselImages.length - position,
-                        transform: `translateX(${position * -CARD_HORIZONTAL_OFFSET}px) translateY(${position * CARD_VERTICAL_OFFSET}px) scale(${1 - position * CARD_SCALE_REDUCTION}) rotate(${position * -CARD_ROTATION_DEGREES}deg)`,
+                        transform: `translateX(${position * CARD_HORIZONTAL_OFFSET}px) translateY(${position * CARD_VERTICAL_OFFSET}px) scale(${1 - position * CARD_SCALE_REDUCTION}) rotate(${position * CARD_ROTATION_DEGREES}deg)`,
                         opacity: position === 0 ? 1 : CAROUSEL_INACTIVE_OPACITY
                       }}
                     >
