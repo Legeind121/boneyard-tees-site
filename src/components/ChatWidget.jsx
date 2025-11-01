@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
 import './ChatWidget.css';
+import { MAX_CHAT_MESSAGES, CHAT_CONVERSATION_CONTEXT_LENGTH } from '../constants';
 
 function ChatWidget({ isOpen, setIsOpen }) {
   const [messages, setMessages] = useState([]);
@@ -22,7 +24,7 @@ function ChatWidget({ isOpen, setIsOpen }) {
         }
       ]);
     }
-  }, [isOpen]);
+  }, [isOpen, messages.length]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -45,17 +47,22 @@ function ChatWidget({ isOpen, setIsOpen }) {
       timestamp: new Date(),
     };
 
-    // Add user message to chat
-    setMessages(prev => [...prev, userMessage]);
+    // Add user message to chat (with message limit)
+    setMessages(prev => {
+      const updated = [...prev, userMessage];
+      return updated.slice(-MAX_CHAT_MESSAGES);
+    });
     setInputValue('');
     setIsLoading(true);
 
     try {
-      // Build conversation history for context
-      const conversationHistory = messages.map(msg => ({
-        role: msg.role,
-        content: msg.content,
-      }));
+      // Build conversation history for context (limited to recent messages)
+      const conversationHistory = messages
+        .slice(-CHAT_CONVERSATION_CONTEXT_LENGTH)
+        .map(msg => ({
+          role: msg.role,
+          content: msg.content,
+        }));
 
       // Call backend API
       const response = await fetch(API_ENDPOINT, {
@@ -69,41 +76,78 @@ function ChatWidget({ isOpen, setIsOpen }) {
         }),
       });
 
-      const data = await response.json();
+      // Parse JSON response with error handling
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        if (import.meta.env.DEV) {
+          console.error('Invalid JSON response:', jsonError);
+        }
+        throw new Error('Invalid response from server');
+      }
+
+      // Check for HTTP errors
+      if (!response.ok) {
+        throw new Error(data.error || 'Server error');
+      }
 
       if (data.success) {
-        // Add Merica's response to chat
-        setMessages(prev => [
-          ...prev,
-          {
-            role: 'assistant',
-            content: data.message,
-            timestamp: new Date(),
-          }
-        ]);
+        // Add Merica's response to chat (with message limit)
+        setMessages(prev => {
+          const updated = [
+            ...prev,
+            {
+              role: 'assistant',
+              content: data.message,
+              timestamp: new Date(),
+            }
+          ];
+          return updated.slice(-MAX_CHAT_MESSAGES);
+        });
       } else {
-        // Handle error
-        setMessages(prev => [
+        // Handle error response from API (with message limit)
+        setMessages(prev => {
+          const updated = [
+            ...prev,
+            {
+              role: 'assistant',
+              content: data.error || "Damn, something broke. Try again in a sec.",
+              timestamp: new Date(),
+              isError: true,
+            }
+          ];
+          return updated.slice(-MAX_CHAT_MESSAGES);
+        });
+      }
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error('Chat error:', error);
+      }
+
+      // Differentiate error types for better user feedback
+      let errorMessage = "Damn, something broke. Try again in a sec.";
+
+      if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+        errorMessage = "Can't reach the server. Check your connection.";
+      } else if (error.message.includes('timeout')) {
+        errorMessage = "Request timed out. Try again.";
+      } else if (error.message.includes('Invalid response')) {
+        errorMessage = "Got a weird response from the server. Try again.";
+      }
+
+      setMessages(prev => {
+        const updated = [
           ...prev,
           {
             role: 'assistant',
-            content: "Damn, something broke. Try again in a sec.",
+            content: errorMessage,
             timestamp: new Date(),
             isError: true,
           }
-        ]);
-      }
-    } catch (error) {
-      console.error('Chat error:', error);
-      setMessages(prev => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: "Can't reach the server. Check your connection.",
-          timestamp: new Date(),
-          isError: true,
-        }
-      ]);
+        ];
+        return updated.slice(-MAX_CHAT_MESSAGES);
+      });
     } finally {
       setIsLoading(false);
     }
@@ -208,5 +252,10 @@ function ChatWidget({ isOpen, setIsOpen }) {
     </div>
   );
 }
+
+ChatWidget.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  setIsOpen: PropTypes.func.isRequired,
+};
 
 export default ChatWidget;

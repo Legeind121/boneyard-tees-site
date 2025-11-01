@@ -1,27 +1,45 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import './App.css'
-import ChatWidget from './components/ChatWidget'
+import {
+  IMAGE_PATHS,
+  MERICA_POSE_MIN_INTERVAL,
+  MERICA_POSE_MAX_INTERVAL,
+  MERICA_POSE_IDLE_WEIGHT,
+  CAROUSEL_AUTO_ROTATE_INTERVAL,
+  CAROUSEL_PAUSE_DURATION,
+  CARD_HORIZONTAL_OFFSET,
+  CARD_SCALE_REDUCTION,
+  CARD_ROTATION_DEGREES,
+  CARD_VERTICAL_OFFSET,
+  CAROUSEL_INACTIVE_OPACITY,
+} from './constants'
+
+// Lazy load ChatWidget for better initial page load performance
+const ChatWidget = lazy(() => import('./components/ChatWidget'))
 
 function App() {
   // Array of Merica character poses
   const mericaPoses = [
-    '/Images/Merica/Merica Idle.png',
-    '/Images/Merica/Merica head slightly left.png',
-    '/Images/Merica/Merica head right.png',
-    '/Images/Merica/Merica head slightly left blink.png'
+    IMAGE_PATHS.MERICA.IDLE,
+    IMAGE_PATHS.MERICA.HEAD_SLIGHTLY_LEFT,
+    IMAGE_PATHS.MERICA.HEAD_RIGHT,
+    IMAGE_PATHS.MERICA.HEAD_SLIGHTLY_LEFT_BLINK
   ]
 
   // State to track current pose
   const [currentPose, setCurrentPose] = useState(mericaPoses[0])
+
+  // Ref to track timeout ID for Merica animation
+  const poseTimeoutRef = useRef(null)
 
   // State to track chat open/close
   const [isChatOpen, setIsChatOpen] = useState(false)
 
   // Array of customer images for carousel (3 real + 2 placeholders)
   const carouselImages = [
-    { src: '/Images/customer images/barber & burnout.jpg', alt: 'Barber & Burnout custom design', isPlaceholder: false },
-    { src: "/Images/customer images/Dorman '25 picnic.png", alt: "Customer design at Dorman '25 picnic", isPlaceholder: false },
-    { src: '/Images/customer images/Strongside kettlebell.png', alt: 'Strongside kettlebell custom design', isPlaceholder: false },
+    { src: IMAGE_PATHS.CUSTOMER_DESIGNS.BARBER_BURNOUT, alt: 'Barber & Burnout custom design', isPlaceholder: false },
+    { src: IMAGE_PATHS.CUSTOMER_DESIGNS.DORMAN_PICNIC, alt: "Customer design at Dorman '25 picnic", isPlaceholder: false },
+    { src: IMAGE_PATHS.CUSTOMER_DESIGNS.STRONGSIDE_KETTLEBELL, alt: 'Strongside kettlebell custom design', isPlaceholder: false },
     { src: '', alt: 'Placeholder 4', isPlaceholder: true },
     { src: '', alt: 'Placeholder 5', isPlaceholder: true }
   ]
@@ -125,8 +143,9 @@ function App() {
   // Random pose change logic
   useEffect(() => {
     const getRandomInterval = () => {
-      // Random interval between 8-15 seconds (8000-15000ms)
-      return Math.floor(Math.random() * 7000) + 8000
+      // Random interval between min and max intervals
+      const range = MERICA_POSE_MAX_INTERVAL - MERICA_POSE_MIN_INTERVAL
+      return Math.floor(Math.random() * range) + MERICA_POSE_MIN_INTERVAL
     }
 
     const changeRandomPose = () => {
@@ -134,8 +153,8 @@ function App() {
         // Create array of poses excluding current pose
         const otherPoses = mericaPoses.filter((pose) => pose !== prevPose)
 
-        // Weighted selection: 50% chance to return to Idle, 50% for other poses
-        const shouldReturnToIdle = Math.random() < 0.5
+        // Weighted selection based on MERICA_POSE_IDLE_WEIGHT constant
+        const shouldReturnToIdle = Math.random() < MERICA_POSE_IDLE_WEIGHT
         const idlePose = mericaPoses[0]
 
         if (shouldReturnToIdle && prevPose !== idlePose) {
@@ -149,19 +168,19 @@ function App() {
 
       // Schedule next change with new random interval
       const nextInterval = getRandomInterval()
-      timeoutId = setTimeout(changeRandomPose, nextInterval)
+      poseTimeoutRef.current = setTimeout(changeRandomPose, nextInterval)
     }
 
     // Initial timeout
-    let timeoutId = setTimeout(changeRandomPose, getRandomInterval())
+    poseTimeoutRef.current = setTimeout(changeRandomPose, getRandomInterval())
 
     // Cleanup on unmount
     return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId)
+      if (poseTimeoutRef.current) {
+        clearTimeout(poseTimeoutRef.current)
       }
     }
-  }, [])
+  }, [mericaPoses])
 
   // Carousel auto-rotation logic
   useEffect(() => {
@@ -169,7 +188,7 @@ function App() {
 
     const intervalId = setInterval(() => {
       setCurrentCarouselIndex((prevIndex) => (prevIndex + 1) % carouselImages.length)
-    }, 5000) // Change every 5 seconds
+    }, CAROUSEL_AUTO_ROTATE_INTERVAL)
 
     return () => clearInterval(intervalId)
   }, [isCarouselPaused, carouselImages.length])
@@ -180,7 +199,7 @@ function App() {
 
     const intervalId = setInterval(() => {
       setCurrentShopCarouselIndex((prevIndex) => (prevIndex + 1) % shopCarouselImages.length)
-    }, 5000) // Change every 5 seconds
+    }, CAROUSEL_AUTO_ROTATE_INTERVAL)
 
     return () => clearInterval(intervalId)
   }, [isShopCarouselPaused, shopCarouselImages.length])
@@ -189,7 +208,7 @@ function App() {
   const nextSlide = () => {
     setIsCarouselPaused(true)
     setCurrentCarouselIndex((prevIndex) => (prevIndex + 1) % carouselImages.length)
-    setTimeout(() => setIsCarouselPaused(false), 10000) // Resume after 10 seconds
+    setTimeout(() => setIsCarouselPaused(false), CAROUSEL_PAUSE_DURATION)
   }
 
   const prevSlide = () => {
@@ -197,14 +216,14 @@ function App() {
     setCurrentCarouselIndex((prevIndex) =>
       prevIndex === 0 ? carouselImages.length - 1 : prevIndex - 1
     )
-    setTimeout(() => setIsCarouselPaused(false), 10000) // Resume after 10 seconds
+    setTimeout(() => setIsCarouselPaused(false), CAROUSEL_PAUSE_DURATION)
   }
 
   // Shop carousel navigation functions
   const nextShopSlide = () => {
     setIsShopCarouselPaused(true)
     setCurrentShopCarouselIndex((prevIndex) => (prevIndex + 1) % shopCarouselImages.length)
-    setTimeout(() => setIsShopCarouselPaused(false), 10000) // Resume after 10 seconds
+    setTimeout(() => setIsShopCarouselPaused(false), CAROUSEL_PAUSE_DURATION)
   }
 
   const prevShopSlide = () => {
@@ -212,7 +231,7 @@ function App() {
     setCurrentShopCarouselIndex((prevIndex) =>
       prevIndex === 0 ? shopCarouselImages.length - 1 : prevIndex - 1
     )
-    setTimeout(() => setIsShopCarouselPaused(false), 10000) // Resume after 10 seconds
+    setTimeout(() => setIsShopCarouselPaused(false), CAROUSEL_PAUSE_DURATION)
   }
 
   // How It Works - Blanks navigation functions
@@ -255,36 +274,53 @@ function App() {
         <div className="perspective-grid"></div>
 
         {/* Shape 1 - Dog Bone (Cyan) */}
-        <img src="/Images/landing page/dog bone.png" alt="" className="floating-shape shape-1" />
+        <img src="/Images/landing page/dog bone.png" alt="" aria-hidden="true" className="floating-shape shape-1" loading="lazy" loading="lazy" onError={(e) => e.target.style.display = 'none'} />
 
         {/* Shape 2 - Paw Print (Pink) */}
-        <img src="/Images/landing page/paw.png" alt="" className="floating-shape shape-2" />
+        <img src="/Images/landing page/paw.png" alt="" aria-hidden="true" className="floating-shape shape-2" loading="lazy" onError={(e) => e.target.style.display = 'none'} />
 
         {/* Shape 3 - Dog Tag (Purple) */}
-        <img src="/Images/landing page/dog tags.png" alt="" className="floating-shape shape-3" />
+        <img src="/Images/landing page/dog tags.png" alt="" aria-hidden="true" className="floating-shape shape-3" loading="lazy" onError={(e) => e.target.style.display = 'none'} />
 
         {/* Shape 4 - Dog Bone (Blue) */}
-        <img src="/Images/landing page/dog bone.png" alt="" className="floating-shape shape-4" />
+        <img src="/Images/landing page/dog bone.png" alt="" aria-hidden="true" className="floating-shape shape-4" loading="lazy" onError={(e) => e.target.style.display = 'none'} />
 
         {/* Shape 5 - Paw Print (Cyan) */}
-        <img src="/Images/landing page/paw.png" alt="" className="floating-shape shape-5" />
+        <img src="/Images/landing page/paw.png" alt="" aria-hidden="true" className="floating-shape shape-5" loading="lazy" onError={(e) => e.target.style.display = 'none'} />
       </div>
+
+      <a href="#main-content" className="skip-link">Skip to main content</a>
 
       <header className="header">
         <h1 className="site-title">BoneYard Tees</h1>
       </header>
 
-      <main className="main-content">
+      <main id="main-content" className="main-content">
         <div className="hero-section">
           <div
             className="merica-character-wrapper"
             onClick={() => setIsChatOpen(true)}
             role="button"
             tabIndex={0}
-            onKeyPress={(e) => e.key === 'Enter' && setIsChatOpen(true)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setIsChatOpen(true);
+              }
+            }}
             aria-label="Chat with Merica"
           >
-            <img src={currentPose} alt="Merica" className="merica-character" />
+            <img
+              src={currentPose}
+              alt="Merica"
+              className="merica-character"
+              onError={(e) => {
+                // Fallback to Idle pose if image fails to load
+                if (e.target.src !== IMAGE_PATHS.MERICA.IDLE) {
+                  e.target.src = IMAGE_PATHS.MERICA.IDLE;
+                }
+              }}
+            />
           </div>
           <h2>Welcome to BoneYard Tees</h2>
           <p className="tagline">T-shirts with more personality than your ex.</p>
@@ -293,7 +329,7 @@ function App() {
 
         {/* Dog Chain Divider */}
         <div className="dog-chain-divider">
-          <img src="/Images/landing page/dog chain.png" alt="Decorative dog chain divider" />
+          <img src="/Images/landing page/dog chain.png" alt="Decorative dog chain divider" loading="lazy" onError={(e) => e.target.parentElement.style.display = 'none'} />
         </div>
 
         {/* NEW Section 2: Featured Designs */}
@@ -314,8 +350,8 @@ function App() {
                       className={`carousel-card ${position === 0 ? 'active' : ''}`}
                       style={{
                         zIndex: carouselImages.length - position,
-                        transform: `translateX(${position * 250}px) translateY(${position * 5}px) scale(${1 - position * 0.08}) rotate(${position * 3}deg)`,
-                        opacity: position === 0 ? 1 : 0.3
+                        transform: `translateX(${position * CARD_HORIZONTAL_OFFSET}px) translateY(${position * CARD_VERTICAL_OFFSET}px) scale(${1 - position * CARD_SCALE_REDUCTION}) rotate(${position * CARD_ROTATION_DEGREES}deg)`,
+                        opacity: position === 0 ? 1 : CAROUSEL_INACTIVE_OPACITY
                       }}
                     >
                       {image.isPlaceholder ? (
@@ -323,23 +359,44 @@ function App() {
                           <span className="placeholder-text">{image.alt}</span>
                         </div>
                       ) : (
-                        <img src={image.src} alt={image.alt} className="carousel-image" />
+                        <img
+                          src={image.src}
+                          alt={image.alt}
+                          className="carousel-image"
+                          loading="lazy"
+                          onError={(e) => {
+                            // Hide broken image and show placeholder
+                            e.target.style.display = 'none';
+                            e.target.parentElement.innerHTML = '<div class="placeholder-box"><span class="placeholder-text">Image not available</span></div>';
+                          }}
+                        />
                       )}
                     </div>
                   )
                 })}
               </div>
-              <button className="carousel-nav carousel-nav-prev" onClick={prevSlide}>
+              <button
+                className="carousel-nav carousel-nav-prev"
+                onClick={prevSlide}
+                aria-label="Previous customer design"
+              >
                 ‹
               </button>
-              <button className="carousel-nav carousel-nav-next" onClick={nextSlide}>
+              <button
+                className="carousel-nav carousel-nav-next"
+                onClick={nextSlide}
+                aria-label="Next customer design"
+              >
                 ›
               </button>
               <div className="carousel-indicators">
                 {carouselImages.map((_, index) => (
-                  <div
+                  <button
                     key={index}
                     className={`carousel-indicator ${index === currentCarouselIndex ? 'active' : ''}`}
+                    onClick={() => setCurrentCarouselIndex(index)}
+                    aria-label={`Go to customer design ${index + 1}`}
+                    aria-current={index === currentCarouselIndex ? 'true' : 'false'}
                   />
                 ))}
               </div>
@@ -362,8 +419,8 @@ function App() {
                       className={`carousel-card ${position === 0 ? 'active' : ''}`}
                       style={{
                         zIndex: shopCarouselImages.length - position,
-                        transform: `translateX(${position * -250}px) translateY(${position * 5}px) scale(${1 - position * 0.08}) rotate(${position * -3}deg)`,
-                        opacity: position === 0 ? 1 : 0.3
+                        transform: `translateX(${position * -CARD_HORIZONTAL_OFFSET}px) translateY(${position * CARD_VERTICAL_OFFSET}px) scale(${1 - position * CARD_SCALE_REDUCTION}) rotate(${position * -CARD_ROTATION_DEGREES}deg)`,
+                        opacity: position === 0 ? 1 : CAROUSEL_INACTIVE_OPACITY
                       }}
                     >
                       {image.isPlaceholder ? (
@@ -371,23 +428,44 @@ function App() {
                           <span className="placeholder-text">{image.alt}</span>
                         </div>
                       ) : (
-                        <img src={image.src} alt={image.alt} className="carousel-image" />
+                        <img
+                          src={image.src}
+                          alt={image.alt}
+                          className="carousel-image"
+                          loading="lazy"
+                          onError={(e) => {
+                            // Hide broken image and show placeholder
+                            e.target.style.display = 'none';
+                            e.target.parentElement.innerHTML = '<div class="placeholder-box"><span class="placeholder-text">Image not available</span></div>';
+                          }}
+                        />
                       )}
                     </div>
                   )
                 })}
               </div>
-              <button className="carousel-nav carousel-nav-prev shop-theme" onClick={prevShopSlide}>
+              <button
+                className="carousel-nav carousel-nav-prev shop-theme"
+                onClick={prevShopSlide}
+                aria-label="Previous shop design"
+              >
                 ‹
               </button>
-              <button className="carousel-nav carousel-nav-next shop-theme" onClick={nextShopSlide}>
+              <button
+                className="carousel-nav carousel-nav-next shop-theme"
+                onClick={nextShopSlide}
+                aria-label="Next shop design"
+              >
                 ›
               </button>
               <div className="carousel-indicators">
                 {shopCarouselImages.map((_, index) => (
-                  <div
+                  <button
                     key={index}
                     className={`carousel-indicator shop-theme ${index === currentShopCarouselIndex ? 'active' : ''}`}
+                    onClick={() => setCurrentShopCarouselIndex(index)}
+                    aria-label={`Go to shop design ${index + 1}`}
+                    aria-current={index === currentShopCarouselIndex ? 'true' : 'false'}
                   />
                 ))}
               </div>
@@ -397,7 +475,7 @@ function App() {
 
         {/* Dog Chain Divider */}
         <div className="dog-chain-divider">
-          <img src="/Images/landing page/dog chain.png" alt="Decorative dog chain divider" />
+          <img src="/Images/landing page/dog chain.png" alt="Decorative dog chain divider" loading="lazy" onError={(e) => e.target.parentElement.style.display = 'none'} />
         </div>
 
         {/* How It Works Section */}
@@ -424,17 +502,28 @@ function App() {
                     </div>
                   ))}
                 </div>
-                <button className="carousel-nav carousel-nav-prev blanks-theme" onClick={prevBlanksSlide}>
-                  <img src="/Images/landing page/dog bone.png" alt="" className="nav-bone prev-bone" />
+                <button
+                  className="carousel-nav carousel-nav-prev blanks-theme"
+                  onClick={prevBlanksSlide}
+                  aria-label="Previous blanks step"
+                >
+                  ‹
                 </button>
-                <button className="carousel-nav carousel-nav-next blanks-theme" onClick={nextBlanksSlide}>
-                  <img src="/Images/landing page/dog bone.png" alt="" className="nav-bone next-bone" />
+                <button
+                  className="carousel-nav carousel-nav-next blanks-theme"
+                  onClick={nextBlanksSlide}
+                  aria-label="Next blanks step"
+                >
+                  ›
                 </button>
                 <div className="carousel-indicators">
                   {blanksCards.map((_, index) => (
-                    <div
+                    <button
                       key={index}
                       className={`carousel-indicator blanks-theme ${index === currentBlanksIndex ? 'active' : ''}`}
+                      onClick={() => setCurrentBlanksIndex(index)}
+                      aria-label={`Go to blanks step ${index + 1}`}
+                      aria-current={index === currentBlanksIndex ? 'true' : 'false'}
                     />
                   ))}
                 </div>
@@ -464,17 +553,28 @@ function App() {
                     </div>
                   ))}
                 </div>
-                <button className="carousel-nav carousel-nav-prev boneyard-theme" onClick={prevBoneyardSlide}>
-                  <img src="/Images/landing page/dog bone.png" alt="" className="nav-bone prev-bone" />
+                <button
+                  className="carousel-nav carousel-nav-prev boneyard-theme"
+                  onClick={prevBoneyardSlide}
+                  aria-label="Previous BoneYard step"
+                >
+                  ‹
                 </button>
-                <button className="carousel-nav carousel-nav-next boneyard-theme" onClick={nextBoneyardSlide}>
-                  <img src="/Images/landing page/dog bone.png" alt="" className="nav-bone next-bone" />
+                <button
+                  className="carousel-nav carousel-nav-next boneyard-theme"
+                  onClick={nextBoneyardSlide}
+                  aria-label="Next BoneYard step"
+                >
+                  ›
                 </button>
                 <div className="carousel-indicators">
                   {boneyardCards.map((_, index) => (
-                    <div
+                    <button
                       key={index}
                       className={`carousel-indicator boneyard-theme ${index === currentBoneyardIndex ? 'active' : ''}`}
+                      onClick={() => setCurrentBoneyardIndex(index)}
+                      aria-label={`Go to BoneYard step ${index + 1}`}
+                      aria-current={index === currentBoneyardIndex ? 'true' : 'false'}
                     />
                   ))}
                 </div>
@@ -504,17 +604,28 @@ function App() {
                     </div>
                   ))}
                 </div>
-                <button className="carousel-nav carousel-nav-prev custom-theme" onClick={prevCustomSlide}>
-                  <img src="/Images/landing page/dog bone.png" alt="" className="nav-bone prev-bone" />
+                <button
+                  className="carousel-nav carousel-nav-prev custom-theme"
+                  onClick={prevCustomSlide}
+                  aria-label="Previous custom step"
+                >
+                  ‹
                 </button>
-                <button className="carousel-nav carousel-nav-next custom-theme" onClick={nextCustomSlide}>
-                  <img src="/Images/landing page/dog bone.png" alt="" className="nav-bone next-bone" />
+                <button
+                  className="carousel-nav carousel-nav-next custom-theme"
+                  onClick={nextCustomSlide}
+                  aria-label="Next custom step"
+                >
+                  ›
                 </button>
                 <div className="carousel-indicators">
                   {customCards.map((_, index) => (
-                    <div
+                    <button
                       key={index}
                       className={`carousel-indicator custom-theme ${index === currentCustomIndex ? 'active' : ''}`}
+                      onClick={() => setCurrentCustomIndex(index)}
+                      aria-label={`Go to custom step ${index + 1}`}
+                      aria-current={index === currentCustomIndex ? 'true' : 'false'}
                     />
                   ))}
                 </div>
@@ -528,8 +639,10 @@ function App() {
         </section>
       </main>
 
-      {/* Merica AI Chatbot */}
-      <ChatWidget isOpen={isChatOpen} setIsOpen={setIsChatOpen} />
+      {/* Merica AI Chatbot - Lazy loaded for performance */}
+      <Suspense fallback={null}>
+        <ChatWidget isOpen={isChatOpen} setIsOpen={setIsChatOpen} />
+      </Suspense>
     </div>
   )
 }

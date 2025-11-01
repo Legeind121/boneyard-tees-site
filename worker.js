@@ -7,6 +7,61 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+  'https://boneyardtees.com',
+  'https://www.boneyardtees.com',
+  'https://boneyard-tees-site.pages.dev', // Cloudflare Pages preview
+];
+
+// Helper function to get CORS origin from request
+function getCorsOrigin(request) {
+  const origin = request.headers.get('Origin');
+  // Allow requests from allowed origins or localhost for development
+  if (origin && (ALLOWED_ORIGINS.includes(origin) || origin.startsWith('http://127.0.0.1') || origin.startsWith('http://localhost'))) {
+    return origin;
+  }
+  // Default to first allowed origin if origin not recognized
+  return ALLOWED_ORIGINS[0];
+}
+
+// Rate limiting configuration
+const RATE_LIMIT_WINDOW = 60000; // 1 minute in milliseconds
+const MAX_REQUESTS_PER_WINDOW = 10; // 10 requests per minute per IP
+const rateLimitMap = new Map(); // In-memory store for rate limiting
+
+// Helper function to check and update rate limit
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const requestData = rateLimitMap.get(ip) || { count: 0, resetTime: now + RATE_LIMIT_WINDOW };
+
+  // Reset if window has passed
+  if (now > requestData.resetTime) {
+    rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return true;
+  }
+
+  // Check if limit exceeded
+  if (requestData.count >= MAX_REQUESTS_PER_WINDOW) {
+    return false;
+  }
+
+  // Increment count
+  requestData.count++;
+  rateLimitMap.set(ip, requestData);
+  return true;
+}
+
+// Clean up old entries periodically (prevents memory bloat)
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, data] of rateLimitMap.entries()) {
+    if (now > data.resetTime) {
+      rateLimitMap.delete(ip);
+    }
+  }
+}, 60000); // Clean up every minute
+
 // System prompt defining Merica's personality and constraints
 const MERICA_SYSTEM_PROMPT = `You are Merica, the badass pit bull mascot of BoneYard Tees - a custom apparel company that makes sick gear for people who don't settle for basic bullshit.
 
@@ -59,7 +114,7 @@ export default {
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         headers: {
-          'Access-Control-Allow-Origin': '*', // Will restrict after testing
+          'Access-Control-Allow-Origin': getCorsOrigin(request),
           'Access-Control-Allow-Methods': 'POST, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type',
           'Access-Control-Max-Age': '86400',
@@ -73,7 +128,22 @@ export default {
         status: 405,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Origin': getCorsOrigin(request),
+        },
+      });
+    }
+
+    // Rate limiting check
+    const clientIP = request.headers.get('CF-Connecting-IP') || 'unknown';
+    if (!checkRateLimit(clientIP)) {
+      return new Response(JSON.stringify({
+        error: 'Too many requests. Slow down, chief.',
+      }), {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': getCorsOrigin(request),
+          'Retry-After': '60',
         },
       });
     }
@@ -88,7 +158,7 @@ export default {
           status: 400,
           headers: {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': getCorsOrigin(request),
           },
         });
       }
@@ -101,7 +171,7 @@ export default {
           status: 400,
           headers: {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': getCorsOrigin(request),
           },
         });
       }
@@ -141,23 +211,23 @@ export default {
         status: 200,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Origin': getCorsOrigin(request),
         },
       });
 
     } catch (error) {
+      // Log error for debugging (visible in wrangler tail)
       console.error('Error calling Claude API:', error);
 
-      // Return error response
+      // Return sanitized error response (don't expose internal details)
       return new Response(JSON.stringify({
         success: false,
         error: 'Failed to process chat request',
-        details: error.message,
       }), {
         status: 500,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Origin': getCorsOrigin(request),
         },
       });
     }

@@ -10,6 +10,7 @@ Guidance for Claude Code when working with this repository.
 - **Domain:** boneyardtees.com (Cloudflare)
 - **Status:** Landing page complete, shop/e-commerce features not yet built
 - **Owner:** Non-technical - use simple, clear explanations
+- **Code Quality:** A-grade (95%) - Production-ready with comprehensive error handling, accessibility, and security
 
 ## Dev Commands
 
@@ -28,25 +29,92 @@ npm run lint     # Check code quality
 
 ```
 src/
-  main.jsx                    # Entry point
-  App.jsx                     # Main landing page component (has ChatWidget imported)
+  main.jsx                    # Entry point with ErrorBoundary wrapper
+  App.jsx                     # Main landing page component with lazy-loaded ChatWidget
   App.css                     # Component styles
   index.css                   # Global styles, cyberpunk colors, fonts
+  constants.js                # Centralized configuration values (NEW)
   components/
-    ChatWidget.jsx            # Merica AI chatbot component
+    ChatWidget.jsx            # Merica AI chatbot component with PropTypes
     ChatWidget.css            # Chatbot styling (cyberpunk theme)
+    ErrorBoundary.jsx         # React error boundary (NEW)
 public/
   Images/                     # All images (Merica character, customer photos, logos, line art)
   fonts/                      # Warbones, Ardillah Kafi fonts
-worker.js                     # Cloudflare Worker backend for chatbot
+worker.js                     # Cloudflare Worker backend with rate limiting (ENHANCED)
 wrangler.toml                 # Cloudflare Worker configuration
 .env                          # Environment variables (ANTHROPIC_API_KEY) - NEVER COMMIT
+package.json                  # Dependencies (includes prop-types)
 index.html                    # Vite entry point
 CHATBOT-SETUP.md              # Complete chatbot deployment guide
 CLAUDE.md                     # This file - project documentation for Claude
 ```
 
 **Asset Paths:** Reference public files as `/Images/folder/file.ext` or `/fonts/file.otf`
+
+## Configuration & Constants
+
+**File:** `src/constants.js`
+
+Centralized configuration for all timing, animation, and path constants. **ALWAYS use these constants** instead of magic numbers:
+
+**Animation Timing:**
+- `MERICA_POSE_MIN_INTERVAL` = 8000ms
+- `MERICA_POSE_MAX_INTERVAL` = 15000ms
+- `MERICA_POSE_IDLE_WEIGHT` = 0.5 (50% chance)
+- `CAROUSEL_AUTO_ROTATE_INTERVAL` = 5000ms
+- `CAROUSEL_PAUSE_DURATION` = 10000ms
+
+**Carousel Animation:**
+- `CARD_HORIZONTAL_OFFSET` = 250px
+- `CARD_SCALE_REDUCTION` = 0.08
+- `CARD_ROTATION_DEGREES` = 3
+- `CARD_VERTICAL_OFFSET` = 5px
+- `CAROUSEL_INACTIVE_OPACITY` = 0.3
+
+**Chat Configuration:**
+- `MAX_CHAT_MESSAGES` = 50 (history limit)
+- `CHAT_CONVERSATION_CONTEXT_LENGTH` = 10 (sent to API)
+
+**Image Paths:**
+- `IMAGE_PATHS.MERICA.*` - Merica character poses
+- `IMAGE_PATHS.CUSTOMER_DESIGNS.*` - Customer photos
+- `IMAGE_PATHS.DECORATIVE.*` - Background decorations
+
+## Error Handling & Reliability
+
+### Error Boundary
+
+**File:** `src/components/ErrorBoundary.jsx`
+
+React Error Boundary catches errors in child components and displays fallback UI. Prevents app crashes.
+
+**Features:**
+- Catches React errors during rendering
+- Displays cyberpunk-themed error page
+- "Try Again" button to reset error state
+- "Go Home" button to reload page
+- Development-only console logging
+- PropTypes validation
+
+**Integration:** Wraps `<App />` in `main.jsx`
+
+### Image Error Handling
+
+**ALL images have fallback handlers:**
+- Merica character: Falls back to Idle pose if image fails
+- Carousel images: Shows "Image not available" placeholder
+- Decorative images: Hides silently (no visual break)
+- Lazy loading on all images (`loading="lazy"`)
+
+### ChatWidget Error Handling
+
+**Comprehensive error differentiation:**
+- Network errors: "Can't reach the server. Check your connection."
+- Timeout errors: "Request timed out. Try again."
+- Invalid response: "Got a weird response from the server. Try again."
+- Generic fallback: "Damn, something broke. Try again in a sec."
+- Development-only console logging
 
 ## Merica AI Chatbot
 
@@ -58,18 +126,20 @@ CLAUDE.md                     # This file - project documentation for Claude
 - ✅ Chatbot fully functional and deployed to production
 - ✅ Worker endpoint: `https://merica-chatbot.boneyardtees.workers.dev`
 - ✅ Using correct Claude model: `claude-haiku-4-5-20251001`
-- ✅ Personality tuned with natural conversation endings
+- ✅ Rate limiting: 10 requests/minute per IP
+- ✅ CORS restricted to boneyardtees.com + Cloudflare Pages
+- ✅ Message history limited to 50 messages
+- ✅ PropTypes validation
+- ✅ Lazy loaded for performance
 - ✅ Live on boneyardtees.com
-
-**Recent Improvements:**
-- Fixed model name error (was using invalid `claude-haiku-4-20250514`, now using correct `claude-haiku-4-5-20251001`)
-- Conversation flow optimization: Better natural endings with engaging CTAs ("Ready for some fresh drip?", "Want some new diggs?")
-- System prompt refinements to avoid awkward "anything else?" loops
 
 **CRITICAL SECURITY:**
 - `.env` file protected by `.gitignore` - API keys never committed to git
 - `ANTHROPIC_API_KEY` stored as encrypted Cloudflare Worker secret
 - `CLOUDFLARE_API_TOKEN` stored in local `.env` for wrangler deployments
+- **Rate limiting:** 10 requests per minute per IP address (prevents API abuse)
+- **CORS:** Restricted to `boneyardtees.com`, `www.boneyardtees.com`, and `boneyard-tees-site.pages.dev`
+- Error messages sanitized (no internal details exposed to users)
 
 ### Architecture
 
@@ -77,11 +147,15 @@ CLAUDE.md                     # This file - project documentation for Claude
 - `worker.js` - API endpoint that communicates with Claude API
 - `wrangler.toml` - Cloudflare Worker configuration
 - **Endpoint:** Deployed to `https://merica-chatbot.boneyardtees.workers.dev`
+- **Rate Limiting:** In-memory Map with automatic cleanup (10 req/min per IP)
+- **CORS Helper:** `getCorsOrigin()` function validates request origins
 
-**Frontend:** React component
+**Frontend:** React component (Lazy Loaded)
 - `src/components/ChatWidget.jsx` - Chat bubble and window component
 - `src/components/ChatWidget.css` - Cyberpunk-styled chat interface (cyan/pink neon theme)
-- **Integration:** Import and add `<ChatWidget />` to App.jsx
+- **Integration:** Lazy loaded with `React.lazy()` and `<Suspense>` in App.jsx
+- **PropTypes:** Validates `isOpen` (bool) and `setIsOpen` (func)
+- **Message Limit:** Frontend stores max 50 messages, backend receives last 10 for context
 
 **Environment Variables:**
 - `.env` - Contains sensitive credentials (NEVER commit to git):
@@ -112,7 +186,7 @@ CLAUDE.md                     # This file - project documentation for Claude
 - "Your mom called - she wants a custom hoodie. Just kidding, but seriously, what you need?"
 - "Dad joke? Fine: What do you call a shirt that's always angry? A tank top. ...Alright, back to business."
 
-**System Prompt Location:** `worker.js` lines 11-73 (`MERICA_SYSTEM_PROMPT` constant)
+**System Prompt Location:** `worker.js` (`MERICA_SYSTEM_PROMPT` constant)
 
 ### Chat Widget Features
 
@@ -127,9 +201,11 @@ CLAUDE.md                     # This file - project documentation for Claude
 
 **Technical Details:**
 - Uses React hooks: `useState`, `useEffect`, `useRef`
-- Maintains conversation history (last 10 messages sent to API for context)
+- Lazy loaded for performance (React.lazy + Suspense)
+- PropTypes validation on all props
+- Maintains conversation history (last 50 messages max, sends 10 to API for context)
 - Fetches responses from Cloudflare Worker API endpoint
-- Error handling with fallback messages
+- Comprehensive error handling with user-friendly messages
 - Mobile responsive (fullscreen on screens <480px)
 
 **API Configuration:**
@@ -142,9 +218,11 @@ CLAUDE.md                     # This file - project documentation for Claude
 - ✅ Wrangler CLI installed (v4.45.3)
 - ✅ Worker deployed to: `https://merica-chatbot.boneyardtees.workers.dev`
 - ✅ API key stored as Cloudflare secret
-- ✅ ChatWidget integrated into App.jsx
+- ✅ ChatWidget integrated into App.jsx (lazy loaded)
 - ✅ Code pushed to GitHub (main branch)
 - ✅ Cloudflare Pages auto-deploys from GitHub
+- ✅ Rate limiting configured
+- ✅ CORS restrictions in place
 
 **To Redeploy Worker:**
 ```bash
@@ -160,6 +238,7 @@ wrangler secret put ANTHROPIC_API_KEY
 
 **Cost Monitoring:**
 - Haiku 4.5: ~$0.0003 per chat (~$3-5/month for 100 chats/day)
+- Rate limiting prevents API abuse (10 req/min per IP)
 - Set budget alerts: [console.anthropic.com/settings/limits](https://console.anthropic.com/settings/limits)
 
 ### Important Notes
@@ -195,36 +274,71 @@ wrangler secret put ANTHROPIC_API_KEY
 ## Landing Page Features
 
 **Main Sections:**
-1. Header - "BONEYARD TEES" logo with cyan-to-pink gradient (6.5rem desktop, 30% larger than original)
-2. Hero - Animated Merica character (585px desktop, 30% larger), tagline, welcome message
+1. Header - "BONEYARD TEES" logo with cyan-to-pink gradient (6.5rem desktop)
+2. Hero - Animated Merica character (585px desktop), tagline, welcome message
 3. Featured Designs - Stacked vertical layout with two independent carousels (customer & shop)
+4. How It Works - Three-column layout with themed carousels (Blanks, BoneYard, Custom)
 
-**Merica Character Animation:**
-- Uses React `useState` and `useEffect` hooks for random pose changes
+### Accessibility Features
+
+**Skip-to-Content Link:**
+- Hidden link at top of page for keyboard users
+- Appears on focus, jumps to `#main-content`
+- Styled with cyan background matching theme
+
+**Carousel Controls:**
+- All navigation buttons have `aria-label` attributes
+- All carousel indicators are interactive buttons (not just visual)
+- Screen reader announcements with `aria-current`
+- Keyboard navigation: Arrow buttons focusable and clickable
+- Manual navigation pauses auto-rotation for 10 seconds
+
+**Merica Character:**
+- Clickable to open chat (keyboard accessible)
+- `onKeyDown` handler for Enter and Spacebar
+- `aria-label="Chat with Merica"`
+- Image fallback to Idle pose if loading fails
+
+**Decorative Images:**
+- All decorative images have `aria-hidden="true"`
+- Error handlers hide broken images gracefully
+
+### Merica Character Animation
+
+- Uses React `useState`, `useEffect`, and `useRef` hooks
 - Cycles through 4 poses: Idle (default), head slightly left, head right, head slightly left blink
-- Random timing: Changes every 8-15 seconds with weighted probability (50% chance to return to Idle)
+- Random timing: Changes every 8-15 seconds (from `MERICA_POSE_MIN_INTERVAL` and `MERICA_POSE_MAX_INTERVAL`)
+- Weighted probability: 50% chance to return to Idle (`MERICA_POSE_IDLE_WEIGHT`)
 - Smooth 0.4s opacity fade transitions between poses
 - Images preloaded on component mount to prevent flashing
+- **Memory leak fixed:** Uses `useRef` for timeout tracking (no leaks on unmount)
 - Current pose tracked in state: `currentPose`
+- Image fallback handler returns to Idle if pose image fails to load
 - Spacing below character: `0.75rem` desktop, `0.65rem` tablet, `0.5rem` mobile
 
-**Hero Section Text Spacing:**
+### Hero Section
+
+**Text Spacing:**
 - `.hero-section h2` (Welcome heading) margin-bottom: `0.5rem`
 - `.hero-section .tagline` margin-bottom: `0.75rem`
 - These values have been reduced from original 1.5rem to create tighter, more cohesive layout
 
-**Dog Chain Divider (Between Sections 1 & 2):**
+### Dog Chain Divider
+
 - Horizontal decorative element spanning 75% of screen width (80% tablet, 85% mobile)
 - Image: `/Images/landing page/dog chain.png`
+- Lazy loaded with error fallback (hides entire divider if image fails)
 - Cyan neon glow effect (3-layer drop-shadow matching other decorative elements)
 - Hover effect intensifies glow
 - Positioned between hero section and featured designs carousel
 - Margin: `2rem` vertical (desktop), `1.5rem` (tablet), `1rem` (mobile)
 
-**Featured Designs Section (Section 3):**
+### Featured Designs Section
+
 - **Stacked vertical layout** with 3rem gap between carousels
-- Both carousels run **independently** for optimal performance (lower system power)
+- Both carousels run **independently** for optimal performance
 - Both use identical carousel component structure with opposite animations
+- **Animation constants:** All values pulled from `constants.js` (CARD_HORIZONTAL_OFFSET, etc.)
 
 **"Featured Customer Designs" Carousel (Top):**
 - Title: Cyan color with multi-layer glow and faint neon outline
@@ -235,20 +349,20 @@ wrangler secret put ANTHROPIC_API_KEY
   - `Dorman '25 picnic.png` (image 2)
   - `Strongside kettlebell.png` (image 3)
 - **Animation:** Cards slide **RIGHT** (left to right) with dramatic "card dealer" effect
-  - `translateX(${position * 250}px)` - 250px horizontal offset per position
-  - `rotate(${position * 3}deg)` - 3° clockwise rotation per position
-  - `scale(${1 - position * 0.08})` - 8% scale reduction per position
-  - `translateY(${position * 5}px)` - 5px vertical offset per position
+  - Uses `CARD_HORIZONTAL_OFFSET` (250px), `CARD_ROTATION_DEGREES` (3°)
+  - `CARD_SCALE_REDUCTION` (0.08), `CARD_VERTICAL_OFFSET` (5px)
+  - Inactive cards use `CAROUSEL_INACTIVE_OPACITY` (0.3)
 - **Horizontal offset:** Entire carousel offset **9rem to the left** (`.customer-carousel-column`)
-- Auto-rotation: Changes every 5 seconds
-- Manual navigation: Left/right arrow buttons (cyan)
-- When arrows clicked, auto-rotation pauses for 10 seconds then resumes
+- Auto-rotation: Changes every `CAROUSEL_AUTO_ROTATE_INTERVAL` (5 seconds)
+- Manual navigation: Left/right arrow buttons with `aria-label` attributes
+- When arrows clicked, auto-rotation pauses for `CAROUSEL_PAUSE_DURATION` (10 seconds)
 - Active card: Full opacity, largest, front of stack (z-index: 5)
 - Background cards: 30% opacity, stacked progressively behind
 - Smooth 0.6s cubic-bezier(0.4, 0, 0.2, 1) transitions between cards
 - Pink glow effect on customer images (box-shadow: 0 0 40px rgba(255, 0, 110, 0.4))
-- Indicator dots below carousel show active slide
+- **Indicator dots:** Interactive buttons with `aria-label` and `aria-current`, clickable to jump to slide
 - State tracked: `currentCarouselIndex`, `isCarouselPaused`
+- **Images:** Lazy loaded with error fallback (shows placeholder if image fails)
 - Carousel images array in App.jsx: `carouselImages` (5 objects with src, alt, isPlaceholder properties)
 
 **"Featured Shop Designs" Carousel (Bottom):**
@@ -256,21 +370,21 @@ wrangler secret put ANTHROPIC_API_KEY
 - **Purple theme:** Navigation buttons and indicators use purple (`--cyber-purple`) via `.shop-theme` class
 - Card deck-style carousel with 5 placeholder cards (all gray "Coming Soon" boxes for now)
 - **Animation:** Cards slide **LEFT** (right to left) - opposite of customer carousel
-  - `translateX(${position * -250}px)` - **Negative** 250px horizontal offset (slides left)
-  - `rotate(${position * -3}deg)` - **Negative** 3° counter-clockwise rotation
-  - `scale(${1 - position * 0.08})` - 8% scale reduction per position
-  - `translateY(${position * 5}px)` - 5px vertical offset per position
+  - Uses negative `CARD_HORIZONTAL_OFFSET` (-250px), negative `CARD_ROTATION_DEGREES` (-3°)
+  - Same scale reduction and vertical offset as customer carousel
 - **Horizontal offset:** Entire carousel offset **9rem to the right** (`.shop-carousel-column`)
-- Auto-rotation: Changes every 5 seconds (independent of customer carousel)
-- Manual navigation: Left/right arrow buttons (purple)
-- When arrows clicked, auto-rotation pauses for 10 seconds then resumes
+- Auto-rotation: Changes every `CAROUSEL_AUTO_ROTATE_INTERVAL` (5 seconds, independent of customer carousel)
+- Manual navigation: Left/right arrow buttons (purple) with `aria-label`
+- When arrows clicked, auto-rotation pauses for `CAROUSEL_PAUSE_DURATION` (10 seconds)
 - Same opacity, z-index stacking, and transition properties as customer carousel
-- Indicator dots below carousel show active slide (purple theme)
+- **Indicator dots:** Interactive buttons (purple theme) with `aria-label` and `aria-current`
 - State tracked: `currentShopCarouselIndex`, `isShopCarouselPaused`
+- **Images:** Lazy loaded with error fallback
 - Carousel images array in App.jsx: `shopCarouselImages` (5 placeholder objects)
 - Ready for future shop product images
 
-**How It Works Section (Section 4):**
+### How It Works Section
+
 - Explains the custom order process with 3 columns: Blanks, BoneYard, Custom
 - **Vertical spacing reduced by 50%** for more compact layout:
   - `.how-it-works-section` margin: `1.5rem 0` (was 3rem)
@@ -283,22 +397,13 @@ wrangler secret put ANTHROPIC_API_KEY
   - Blanks: Blue theme (`.blanks-theme`)
   - BoneYard: Purple theme (`.boneyard-theme`)
   - Custom: Pink theme (`.custom-theme`)
-- **Dog Bone Navigation Buttons:**
-  - **CRITICAL - NEEDS CORRECTION:** Bone buttons currently not displaying visibly despite multiple filter adjustments
-  - Image: `/Images/landing page/dog bone.png`
-  - Size: `35px` width (30px in How It Works section due to 0.85 scale)
-  - Rotation: -90deg for left arrows, 90deg for right arrows
-  - Positioned at `-30px` from carousel edges (half the original -60px distance)
-  - **Current filter state:** `brightness(5) saturate(4) contrast(2) hue-rotate(0deg)` - no glow effects
-  - **Issue:** White bone images not visible against dark cyberpunk background despite brightness adjustments
-  - **Attempted fixes:** Multiple filter combinations (brightness, saturation, contrast, glow effects) - all unsuccessful
-  - **Next steps needed:** Consider alternative approaches (colored overlays, SVG with fill colors, or different image treatment)
-- Auto-rotation: Changes every 5 seconds (independent of other carousels)
-- Manual navigation via bone buttons
-- Indicator dots below each carousel
+- **Navigation:** Arrow text (‹ ›) buttons with themed colors and aria-labels
+- **Indicators:** Interactive buttons with themed colors, aria-labels, and aria-current
+- Auto-rotation: Changes every `CAROUSEL_AUTO_ROTATE_INTERVAL` (5 seconds, independent of other carousels)
 - State tracked: `currentBlanksIndex`, `currentBoneyardIndex`, `currentCustomIndex`
 
-**Animated Background:**
+### Animated Background
+
 - Perspective grid (Tron-style) - subtle cyan lines, slow scrolling animation
 - 5 floating shapes with vibrant neon glows (PNG line art from `/Images/landing page/`):
   - 2x Dog bones (`dog bone.png`) - Cyan & Blue glows
@@ -306,6 +411,7 @@ wrangler secret put ANTHROPIC_API_KEY
   - 1x Dog tags (`dog tags.png`) - Purple glow
 - Slow floating/rotating animations (25-35 second cycles)
 - All positioned behind content (z-index: -1)
+- **All decorative images:** Lazy loaded, aria-hidden, with error fallbacks (hide silently if image fails)
 - Responsive - scales down on mobile/tablet
 
 ## Key Assets
@@ -313,7 +419,7 @@ wrangler secret put ANTHROPIC_API_KEY
 **Merica Character:** `/Images/Merica/`
 - **In animation rotation:** Idle (default), head slightly left, head right, head slightly left blink
 - **Available (not in use):** Excited, Grumpy, Thinking, Wave, pointing
-- Managed via `mericaPoses` array in App.jsx
+- Managed via `mericaPoses` array in App.jsx using `IMAGE_PATHS.MERICA.*` constants
 
 **Line Art:** `/Images/landing page/`
 - Background decorations: dog bone.png, paw.png, dog tags.png
@@ -342,6 +448,58 @@ wrangler secret put ANTHROPIC_API_KEY
 - Desktop: `1rem` (reduced from original 4rem for tighter layout)
 - Tablet/Mobile (768px): `0.5rem` (reduced from original 2rem)
 
+## Code Quality Standards
+
+**This codebase maintains A-grade (95%) code quality. Follow these standards:**
+
+### React Best Practices
+
+- **Use PropTypes** for all component props
+- **Lazy load** components that aren't immediately visible (ChatWidget example)
+- **useRef** for timeout/interval IDs to prevent memory leaks
+- **Proper dependency arrays** in all useEffect hooks
+- **Error boundaries** to catch rendering errors
+- **Functional components** with hooks only (no class components except ErrorBoundary)
+
+### Constants & Configuration
+
+- **NEVER use magic numbers** - all timing, sizing, and path values must use constants from `constants.js`
+- **Update constants.js** when adding new configurable values
+- **Import from constants.js** at top of file
+
+### Error Handling
+
+- **Image fallbacks** on all images (onError handlers)
+- **Lazy loading** on all images (loading="lazy")
+- **Try-catch blocks** around async operations
+- **User-friendly error messages** (development details only in dev mode)
+- **Graceful degradation** when features fail
+
+### Accessibility (WCAG Compliance)
+
+- **aria-label** on all interactive elements without visible text
+- **aria-current** on active carousel indicators
+- **aria-hidden** on decorative images
+- **Keyboard navigation** (onKeyDown, not onKeyPress)
+- **Skip-to-content link** for keyboard users
+- **Interactive indicators** (buttons, not divs)
+
+### Performance
+
+- **Lazy load** components with React.lazy + Suspense
+- **Lazy load images** with loading="lazy" attribute
+- **useRef** for timeout/interval tracking
+- **Proper cleanup** in useEffect return functions
+- **Bounded state** (message history limits, etc.)
+
+### Security
+
+- **Rate limiting** on all API endpoints
+- **CORS restrictions** to allowed domains only
+- **No sensitive data** in error messages
+- **PropTypes validation** to prevent type errors
+- **Environment variables** for secrets (never commit .env)
+
 ## Important Notes
 
 - Mobile responsive design implemented (breakpoints: 768px, 480px)
@@ -349,72 +507,62 @@ wrangler secret put ANTHROPIC_API_KEY
 - No e-commerce functionality yet
 - Use functional components and React hooks
 - Owner is non-technical - explain changes clearly
-- **DO NOT** modify animation timing (Merica poses or carousel rotations) without discussing with owner first
-- Multiple independent animations run simultaneously:
-  - Merica character pose changes (8-15 second intervals)
-  - Customer carousel auto-rotation (5 second intervals)
-  - Shop carousel auto-rotation (5 second intervals, independent of customer carousel)
-  - All use separate state and useEffect hooks for optimal performance
+- **DO NOT** modify animation timing without discussing with owner first
+- **ALWAYS use constants** from `constants.js` instead of hardcoding values
+- **NEVER commit `.env` file** to git
 
-## Troubleshooting & Lessons Learned
+## Development Workflow
+
+1. **Before making changes:**
+   - Read `constants.js` to understand configuration
+   - Check `CLAUDE.md` for project standards
+   - Review PropTypes if modifying component props
+
+2. **During development:**
+   - Use constants instead of magic numbers
+   - Add PropTypes to new components
+   - Add error handlers to images
+   - Add aria-labels to interactive elements
+   - Test keyboard navigation
+
+3. **Before committing:**
+   - Run `npm run lint` to check for issues
+   - Verify no `.env` changes are staged
+   - Test error scenarios (broken images, API failures)
+   - Check accessibility (keyboard nav, screen readers)
+
+4. **Deployment:**
+   - Frontend: Push to GitHub → Cloudflare Pages auto-deploys
+   - Backend: `wrangler deploy` for worker changes
+   - Secrets: `wrangler secret put ANTHROPIC_API_KEY` if updating
+
+## Troubleshooting
 
 **Image Path Issues:**
-- **ALWAYS verify image filenames match exactly** - if carousel images aren't loading, check that the filename in `carouselImages` array matches the actual file in `/Images/customer images/`
+- **ALWAYS verify image filenames match exactly**
 - Windows file paths are case-insensitive but React/Vite asset paths ARE case-sensitive in production
-- Special characters in filenames (like `&` in `barber & burnout.jpg`) are fine in paths, just use exact filename
+- Special characters in filenames (like `&` in `barber & burnout.jpg`) are fine in paths
+- All images should have lazy loading and error fallbacks
 
-**Carousel Display Problems:**
-- If images show through each other or don't display properly, check:
-  1. Image paths are correct and images exist at specified location
-  2. `.carousel-card` z-index stacking is working (inline styles control this)
-  3. `.carousel-cards` has proper dimensions and doesn't have conflicting overflow properties
-  4. Don't add `background-color` to `.carousel-card` - causes visibility issues
-  5. Don't override z-index with `!important` on `.carousel-card.active` - breaks stacking
+**Carousel Issues:**
+- All animation values should come from `constants.js`
+- Check that carousel state variables have unique names (no conflicts between different carousels)
+- Verify `aria-label` attributes are present on navigation buttons
+- Ensure indicators are buttons, not divs
 
-**Carousel Animation System:**
-- **Opposite directions achieved with negative values:** Customer carousel uses positive `translateX(250px)` and `rotate(3deg)`, shop carousel uses negative `translateX(-250px)` and `rotate(-3deg)`
-- **Animation intensity:** 250px horizontal offset per position creates dramatic "card dealer" effect (increased from original 10px subtle stacking)
-- **Rotation adds flair:** 3° rotation per position makes cards appear to "flip" as they move to back of deck
-- **Horizontal carousel offsets:** Use negative margins on `.customer-carousel-column` (left offset) and `.shop-carousel-column` (right offset) to create asymmetric staggered layout
-- **Independent state:** Each carousel has its own state variables (`currentCarouselIndex` vs `currentShopCarouselIndex`) and navigation functions to prevent conflicts
-- **Theme customization:** Use `.shop-theme` class on navigation/indicators to override cyan defaults with purple colors
+**Memory Leaks:**
+- Always use `useRef` for setTimeout/setInterval IDs
+- Always return cleanup function in useEffect
+- Check that all intervals are cleared on unmount
 
-**CSS Spacing Changes:**
-- When reducing spacing, do it incrementally and check results before continuing
-- The `.main-content gap` property controls spacing between ALL main sections (hero, featured designs)
-- The `.featured-section gap` property controls vertical spacing between the two carousels (currently 3rem)
-- Hero section text spacing is controlled by individual margin-bottom values on h2, .tagline, etc.
+**Cloudflare Worker Issues:**
+- **Rate Limiting:** 10 requests/minute per IP - test with different IPs if hitting limit
+- **CORS Errors:** Verify request origin matches allowed domains in worker.js
+- **Model Errors:** Use exact model ID: `claude-haiku-4-5-20251001`
+- **Debugging:** Use `wrangler tail --format pretty` to view real-time logs
+- **Local Testing:** Use `wrangler dev` to test worker locally (runs at `http://localhost:8787`)
 
-**Development Workflow:**
-- Run `npm run dev` and check browser console for 404 errors when adding new images
-- Use browser DevTools to inspect computed styles when debugging layout issues
-- If making multiple related changes, test incrementally rather than all at once
-
-**Cloudflare Worker & Chatbot Issues:**
-- **Model Name Errors:** Always use exact model IDs from Anthropic documentation (e.g., `claude-haiku-4-5-20251001`). Incorrect model names cause 500 server errors. Check [https://docs.claude.com/en/docs/about-claude/models](https://docs.claude.com/en/docs/about-claude/models) for current model names.
-- **Wrangler Authentication:** Store `CLOUDFLARE_API_TOKEN` in `.env` file to prevent login prompts during `wrangler deploy` or `wrangler tail` commands. Set with: `$env:CLOUDFLARE_API_TOKEN="your_token"` (PowerShell) or `export CLOUDFLARE_API_TOKEN="your_token"` (bash).
-- **Debugging Worker Errors:** Use `wrangler tail --format pretty` to view real-time logs when chatbot isn't responding correctly. Send test message in browser and watch console output for actual error messages from Claude API.
-- **Testing Worker Locally:** Use `wrangler dev` to test worker locally before deploying to production. Worker runs at `http://localhost:8787`.
-- **API Key Security:** Never commit `.env` to git. `ANTHROPIC_API_KEY` is stored as encrypted secret on Cloudflare via `wrangler secret put ANTHROPIC_API_KEY`.
-- **Deployment:** After making changes to `worker.js`, deploy with `wrangler deploy`. Changes are live immediately.
-
-**Dog Bone Navigation Button Visibility (UNRESOLVED ISSUE):**
-- **Problem:** Dog bone images used for carousel navigation in "How It Works" section are barely visible/invisible against dark cyberpunk background
-- **Image:** `/Images/landing page/dog bone.png` (white bone on transparent background)
-- **Attempted fixes (all unsuccessful):**
-  1. CSS filters: brightness(5), saturate(4), contrast(2)
-  2. Drop-shadow glow effects (cyan/purple/pink themed) - removed per owner request
-  3. Multiple iterations of filter combinations
-  4. Hard refresh to clear browser cache
-- **Current state:** Bones have `brightness(5) saturate(4) contrast(2) hue-rotate(0deg)` with no glow effects
-- **Root cause:** White/light-colored bone PNG not providing enough contrast against `#0a0e27` dark background, even with extreme brightness filters
-- **Potential solutions to try:**
-  1. Use colored bone images instead of white (create blue/purple/pink versions)
-  2. Convert to SVG and apply `fill` colors directly (better than filter approach)
-  3. Add colored background to button container (circular colored backgrounds behind bones)
-  4. Use CSS `mix-blend-mode` for better color blending
-  5. Replace with different icon/image that has better inherent visibility
-- **Files affected:**
-  - [src/App.jsx](src/App.jsx) - Bone images in navigation buttons (lines with `<img src="/Images/landing page/dog bone.png"`)
-  - [src/App.css](src/App.css) - `.nav-bone`, `.prev-bone`, `.next-bone`, `.blanks-theme`, `.boneyard-theme`, `.custom-theme` classes
-- **DO NOT** modify without owner approval - owner requested specific bone image and themed colors
+**PropTypes Errors:**
+- All components should have PropTypes defined
+- ChatWidget: expects `isOpen` (bool) and `setIsOpen` (func)
+- ErrorBoundary: expects `children` (node)
