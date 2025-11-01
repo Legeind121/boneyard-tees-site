@@ -25,14 +25,36 @@ function getCorsOrigin(request) {
   return ALLOWED_ORIGINS[0];
 }
 
+// Helper function to create secure headers
+function getSecureHeaders(request) {
+  return {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': getCorsOrigin(request),
+    'X-Frame-Options': 'DENY',
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+  };
+}
+
 // Rate limiting configuration
 const RATE_LIMIT_WINDOW = 60000; // 1 minute in milliseconds
-const MAX_REQUESTS_PER_WINDOW = 10; // 10 requests per minute per IP
+const MAX_REQUESTS_PER_WINDOW = 5; // 5 requests per minute per IP (reduced from 10)
 const rateLimitMap = new Map(); // In-memory store for rate limiting
+const MAX_CONVERSATION_HISTORY_LENGTH = 20; // Maximum conversation history array length
 
 // Helper function to check and update rate limit
 function checkRateLimit(ip) {
   const now = Date.now();
+
+  // Clean up expired entries on each request to prevent memory bloat
+  // This replaces the problematic setInterval approach
+  for (const [storedIp, data] of rateLimitMap.entries()) {
+    if (now > data.resetTime) {
+      rateLimitMap.delete(storedIp);
+    }
+  }
+
   const requestData = rateLimitMap.get(ip) || { count: 0, resetTime: now + RATE_LIMIT_WINDOW };
 
   // Reset if window has passed
@@ -51,16 +73,6 @@ function checkRateLimit(ip) {
   rateLimitMap.set(ip, requestData);
   return true;
 }
-
-// Clean up old entries periodically (prevents memory bloat)
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, data] of rateLimitMap.entries()) {
-    if (now > data.resetTime) {
-      rateLimitMap.delete(ip);
-    }
-  }
-}, 60000); // Clean up every minute
 
 // System prompt defining Merica's personality and constraints
 const MERICA_SYSTEM_PROMPT = `You are Merica, the badass pit bull mascot of BoneYard Tees - a custom apparel company that makes sick gear for people who don't settle for basic bullshit.
@@ -109,12 +121,12 @@ CURRENT SITE STATUS:
 Remember: You're rough, sarcastic, and a little mean - but you actually know your shit and you'll help people get killer custom apparel. You bust balls, but you deliver.`;
 
 export default {
-  async fetch(request, env, ctx) {
+  async fetch(request, env) {
     // Handle CORS preflight requests
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         headers: {
-          'Access-Control-Allow-Origin': getCorsOrigin(request),
+          ...getSecureHeaders(request),
           'Access-Control-Allow-Methods': 'POST, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type',
           'Access-Control-Max-Age': '86400',
@@ -126,23 +138,20 @@ export default {
     if (request.method !== 'POST') {
       return new Response(JSON.stringify({ error: 'Method not allowed' }), {
         status: 405,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': getCorsOrigin(request),
-        },
+        headers: getSecureHeaders(request),
       });
     }
 
     // Rate limiting check
     const clientIP = request.headers.get('CF-Connecting-IP') || 'unknown';
     if (!checkRateLimit(clientIP)) {
+      console.log(`Rate limit exceeded for IP: ${clientIP}`);
       return new Response(JSON.stringify({
         error: 'Too many requests. Slow down, chief.',
       }), {
         status: 429,
         headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': getCorsOrigin(request),
+          ...getSecureHeaders(request),
           'Retry-After': '60',
         },
       });
@@ -156,10 +165,15 @@ export default {
       if (!message || typeof message !== 'string') {
         return new Response(JSON.stringify({ error: 'Invalid message format' }), {
           status: 400,
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': getCorsOrigin(request),
-          },
+          headers: getSecureHeaders(request),
+        });
+      }
+
+      // Validate conversation history length to prevent abuse
+      if (!Array.isArray(conversationHistory) || conversationHistory.length > MAX_CONVERSATION_HISTORY_LENGTH) {
+        return new Response(JSON.stringify({ error: 'Invalid conversation history' }), {
+          status: 400,
+          headers: getSecureHeaders(request),
         });
       }
 
@@ -169,10 +183,7 @@ export default {
           error: 'Message too long (max 2000 characters)'
         }), {
           status: 400,
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': getCorsOrigin(request),
-          },
+          headers: getSecureHeaders(request),
         });
       }
 
@@ -209,10 +220,7 @@ export default {
         }
       }), {
         status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': getCorsOrigin(request),
-        },
+        headers: getSecureHeaders(request),
       });
 
     } catch (error) {
@@ -225,10 +233,7 @@ export default {
         error: 'Failed to process chat request',
       }), {
         status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': getCorsOrigin(request),
-        },
+        headers: getSecureHeaders(request),
       });
     }
   },

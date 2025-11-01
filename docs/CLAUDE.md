@@ -28,26 +28,29 @@ npm run lint     # Check code quality
 ## Project Structure
 
 ```
+docs/
+  CLAUDE.md                   # This file - project documentation for Claude
+  CHATBOT-SETUP.md            # Complete chatbot deployment guide
 src/
   main.jsx                    # Entry point with ErrorBoundary wrapper
   App.jsx                     # Main landing page component with lazy-loaded ChatWidget
   App.css                     # Component styles
   index.css                   # Global styles, cyberpunk colors, fonts
-  constants.js                # Centralized configuration values (NEW)
+  constants.js                # Centralized configuration values
   components/
     ChatWidget.jsx            # Merica AI chatbot component with PropTypes
     ChatWidget.css            # Chatbot styling (cyberpunk theme)
-    ErrorBoundary.jsx         # React error boundary (NEW)
+    ErrorBoundary.jsx         # React error boundary
 public/
   Images/                     # All images (Merica character, customer photos, logos, line art)
   fonts/                      # Warbones, Ardillah Kafi fonts
-worker.js                     # Cloudflare Worker backend with rate limiting (ENHANCED)
+worker.js                     # Cloudflare Worker backend with security hardening
 wrangler.toml                 # Cloudflare Worker configuration
-.env                          # Environment variables (ANTHROPIC_API_KEY) - NEVER COMMIT
+.env                          # Environment variables (secrets) - NEVER COMMIT
+.env.example                  # Environment variable template (safe to commit)
 package.json                  # Dependencies (includes prop-types)
-index.html                    # Vite entry point
-CHATBOT-SETUP.md              # Complete chatbot deployment guide
-CLAUDE.md                     # This file - project documentation for Claude
+index.html                    # Vite entry point with CSP
+README.md                     # Project overview and quick start guide
 ```
 
 **Asset Paths:** Reference public files as `/Images/folder/file.ext` or `/fonts/file.otf`
@@ -126,20 +129,29 @@ React Error Boundary catches errors in child components and displays fallback UI
 - ✅ Chatbot fully functional and deployed to production
 - ✅ Worker endpoint: `https://merica-chatbot.boneyardtees.workers.dev`
 - ✅ Using correct Claude model: `claude-haiku-4-5-20251001`
-- ✅ Rate limiting: 10 requests/minute per IP
+- ✅ Rate limiting: 5 requests/minute per IP (strengthened from 10)
 - ✅ CORS restricted to boneyardtees.com + Cloudflare Pages
-- ✅ Message history limited to 50 messages
+- ✅ Message history limited to 50 messages (frontend), 20 max (backend validation)
 - ✅ PropTypes validation
 - ✅ Lazy loaded for performance
 - ✅ Live on boneyardtees.com
+- ✅ Content Security Policy enabled
+- ✅ Full security headers (HSTS, X-Frame-Options, etc.)
 
 **CRITICAL SECURITY:**
 - `.env` file protected by `.gitignore` - API keys never committed to git
 - `ANTHROPIC_API_KEY` stored as encrypted Cloudflare Worker secret
 - `CLOUDFLARE_API_TOKEN` stored in local `.env` for wrangler deployments
-- **Rate limiting:** 10 requests per minute per IP address (prevents API abuse)
+- `VITE_API_ENDPOINT` stored in `.env` for configurable API endpoint
+- **Rate limiting:** 5 requests per minute per IP address (prevents API abuse)
+- **Rate limit cleanup:** On-request cleanup prevents memory leaks (no setInterval)
+- **Input validation:** Message length (2000 chars max) and conversation history (20 messages max)
 - **CORS:** Restricted to `boneyardtees.com`, `www.boneyardtees.com`, and `boneyard-tees-site.pages.dev`
+- **Security headers:** X-Frame-Options (DENY), X-Content-Type-Options (nosniff), Referrer-Policy, HSTS
+- **Content Security Policy:** Restrictive CSP in index.html prevents XSS attacks
+- **No unsafe patterns:** All innerHTML usage replaced with React state-based rendering
 - Error messages sanitized (no internal details exposed to users)
+- Security event logging (rate limit violations logged to worker console)
 
 ### Architecture
 
@@ -147,8 +159,10 @@ React Error Boundary catches errors in child components and displays fallback UI
 - `worker.js` - API endpoint that communicates with Claude API
 - `wrangler.toml` - Cloudflare Worker configuration
 - **Endpoint:** Deployed to `https://merica-chatbot.boneyardtees.workers.dev`
-- **Rate Limiting:** In-memory Map with automatic cleanup (10 req/min per IP)
+- **Rate Limiting:** In-memory Map with per-request cleanup (5 req/min per IP, prevents memory leaks)
+- **Security Headers:** `getSecureHeaders()` helper adds HSTS, X-Frame-Options, etc.
 - **CORS Helper:** `getCorsOrigin()` function validates request origins
+- **Input Validation:** Message length and conversation history array validation
 
 **Frontend:** React component (Lazy Loaded)
 - `src/components/ChatWidget.jsx` - Chat bubble and window component
@@ -156,11 +170,14 @@ React Error Boundary catches errors in child components and displays fallback UI
 - **Integration:** Lazy loaded with `React.lazy()` and `<Suspense>` in App.jsx
 - **PropTypes:** Validates `isOpen` (bool) and `setIsOpen` (func)
 - **Message Limit:** Frontend stores max 50 messages, backend receives last 10 for context
+- **API Endpoint:** Configurable via `VITE_API_ENDPOINT` environment variable
 
 **Environment Variables:**
 - `.env` - Contains sensitive credentials (NEVER commit to git):
   - `ANTHROPIC_API_KEY` - Claude API access for chatbot
   - `CLOUDFLARE_API_TOKEN` - Wrangler CLI authentication for deployments
+  - `VITE_API_ENDPOINT` - Chatbot API endpoint URL (frontend only)
+- `.env.example` - Template for environment variables
 - `.gitignore` - Protects `.env`, `.env.local`, `.env.*.local` from git commits
 - `ANTHROPIC_API_KEY` is also stored as encrypted secret on Cloudflare Worker via `wrangler secret put ANTHROPIC_API_KEY`
 

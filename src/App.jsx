@@ -35,6 +35,10 @@ function App() {
   // State to track chat open/close
   const [isChatOpen, setIsChatOpen] = useState(false)
 
+  // State to track broken images (by index)
+  const [brokenCustomerImages, setBrokenCustomerImages] = useState(new Set())
+  const [brokenShopImages, setBrokenShopImages] = useState(new Set())
+
   // Array of customer images for carousel (3 real + 2 placeholders)
   const carouselImages = [
     { src: IMAGE_PATHS.CUSTOMER_DESIGNS.BARBER_BURNOUT, alt: 'Barber & Burnout custom design', isPlaceholder: false },
@@ -274,7 +278,7 @@ function App() {
         <div className="perspective-grid"></div>
 
         {/* Shape 1 - Dog Bone (Cyan) */}
-        <img src="/Images/landing page/dog bone.png" alt="" aria-hidden="true" className="floating-shape shape-1" loading="lazy" loading="lazy" onError={(e) => e.target.style.display = 'none'} />
+        <img src="/Images/landing page/dog bone.png" alt="" aria-hidden="true" className="floating-shape shape-1" loading="lazy" onError={(e) => e.target.style.display = 'none'} />
 
         {/* Shape 2 - Paw Print (Pink) */}
         <img src="/Images/landing page/paw.png" alt="" aria-hidden="true" className="floating-shape shape-2" loading="lazy" onError={(e) => e.target.style.display = 'none'} />
@@ -354,9 +358,11 @@ function App() {
                         opacity: position === 0 ? 1 : CAROUSEL_INACTIVE_OPACITY
                       }}
                     >
-                      {image.isPlaceholder ? (
+                      {image.isPlaceholder || brokenCustomerImages.has(index) ? (
                         <div className="placeholder-box">
-                          <span className="placeholder-text">{image.alt}</span>
+                          <span className="placeholder-text">
+                            {brokenCustomerImages.has(index) ? 'Image not available' : image.alt}
+                          </span>
                         </div>
                       ) : (
                         <img
@@ -364,10 +370,9 @@ function App() {
                           alt={image.alt}
                           className="carousel-image"
                           loading="lazy"
-                          onError={(e) => {
-                            // Hide broken image and show placeholder
-                            e.target.style.display = 'none';
-                            e.target.parentElement.innerHTML = '<div class="placeholder-box"><span class="placeholder-text">Image not available</span></div>';
+                          onError={() => {
+                            // Mark this image as broken using React state
+                            setBrokenCustomerImages(prev => new Set([...prev, index]));
                           }}
                         />
                       )}
@@ -423,9 +428,11 @@ function App() {
                         opacity: position === 0 ? 1 : CAROUSEL_INACTIVE_OPACITY
                       }}
                     >
-                      {image.isPlaceholder ? (
+                      {image.isPlaceholder || brokenShopImages.has(index) ? (
                         <div className="placeholder-box">
-                          <span className="placeholder-text">{image.alt}</span>
+                          <span className="placeholder-text">
+                            {brokenShopImages.has(index) ? 'Image not available' : image.alt}
+                          </span>
                         </div>
                       ) : (
                         <img
@@ -433,10 +440,9 @@ function App() {
                           alt={image.alt}
                           className="carousel-image"
                           loading="lazy"
-                          onError={(e) => {
-                            // Hide broken image and show placeholder
-                            e.target.style.display = 'none';
-                            e.target.parentElement.innerHTML = '<div class="placeholder-box"><span class="placeholder-text">Image not available</span></div>';
+                          onError={() => {
+                            // Mark this image as broken using React state
+                            setBrokenShopImages(prev => new Set([...prev, index]));
                           }}
                         />
                       )}

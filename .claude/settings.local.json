@@ -7,7 +7,14 @@
       "Bash(npx kill-port:*)",
       "Bash(npm run lint)",
       "Bash(npm run dev:*)",
-      "Bash(wrangler deploy:*)"
+      "Bash(wrangler deploy:*)",
+      "Bash(npm audit:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(git log:*)",
+      "Bash(npm ls:*)",
+      "Bash(npm run build:*)",
+      "Bash(tree /F /A 'c:UsersmcasiApp Devboneyard-tees-site' 2)",
+      "Bash(nul)"
     ],
     "deny": [],
     "ask": []

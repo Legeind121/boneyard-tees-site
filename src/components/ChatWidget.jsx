@@ -10,8 +10,8 @@ function ChatWidget({ isOpen, setIsOpen }) {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  // API endpoint - UPDATE THIS after deploying your Cloudflare Worker
-  const API_ENDPOINT = 'https://merica-chatbot.boneyardtees.workers.dev';
+  // API endpoint from environment variable (with fallback for development)
+  const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT || 'https://merica-chatbot.boneyardtees.workers.dev';
 
   // Welcome message when chat opens
   useEffect(() => {

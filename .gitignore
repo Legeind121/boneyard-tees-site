@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Wrangler
+.wrangler
+
+# Windows temp files
+nul
+
 # Environment variables (API keys, secrets)
 .env
 .env.local
