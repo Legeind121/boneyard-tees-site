@@ -270,6 +270,34 @@ wrangler secret put ANTHROPIC_API_KEY
 - Carousel images array in App.jsx: `shopCarouselImages` (5 placeholder objects)
 - Ready for future shop product images
 
+**How It Works Section (Section 4):**
+- Explains the custom order process with 3 columns: Blanks, BoneYard, Custom
+- **Vertical spacing reduced by 50%** for more compact layout:
+  - `.how-it-works-section` margin: `1.5rem 0` (was 3rem)
+  - `.section-title` margin-bottom: `1.5rem` (was 3rem)
+  - `.how-it-works-columns` gap: `1.5rem` (was 3rem)
+  - `.how-it-works-title` margin-bottom: `1rem` (was 2rem)
+  - `.how-it-works-text` margin-top: `1rem` (was 2rem)
+- Three independent carousels (Blanks, BoneYard, Custom) - same card deck structure as Featured Designs
+- Each carousel has themed navigation and indicators:
+  - Blanks: Blue theme (`.blanks-theme`)
+  - BoneYard: Purple theme (`.boneyard-theme`)
+  - Custom: Pink theme (`.custom-theme`)
+- **Dog Bone Navigation Buttons:**
+  - **CRITICAL - NEEDS CORRECTION:** Bone buttons currently not displaying visibly despite multiple filter adjustments
+  - Image: `/Images/landing page/dog bone.png`
+  - Size: `35px` width (30px in How It Works section due to 0.85 scale)
+  - Rotation: -90deg for left arrows, 90deg for right arrows
+  - Positioned at `-30px` from carousel edges (half the original -60px distance)
+  - **Current filter state:** `brightness(5) saturate(4) contrast(2) hue-rotate(0deg)` - no glow effects
+  - **Issue:** White bone images not visible against dark cyberpunk background despite brightness adjustments
+  - **Attempted fixes:** Multiple filter combinations (brightness, saturation, contrast, glow effects) - all unsuccessful
+  - **Next steps needed:** Consider alternative approaches (colored overlays, SVG with fill colors, or different image treatment)
+- Auto-rotation: Changes every 5 seconds (independent of other carousels)
+- Manual navigation via bone buttons
+- Indicator dots below each carousel
+- State tracked: `currentBlanksIndex`, `currentBoneyardIndex`, `currentCustomIndex`
+
 **Animated Background:**
 - Perspective grid (Tron-style) - subtle cyan lines, slow scrolling animation
 - 5 floating shapes with vibrant neon glows (PNG line art from `/Images/landing page/`):
@@ -369,3 +397,24 @@ wrangler secret put ANTHROPIC_API_KEY
 - **Testing Worker Locally:** Use `wrangler dev` to test worker locally before deploying to production. Worker runs at `http://localhost:8787`.
 - **API Key Security:** Never commit `.env` to git. `ANTHROPIC_API_KEY` is stored as encrypted secret on Cloudflare via `wrangler secret put ANTHROPIC_API_KEY`.
 - **Deployment:** After making changes to `worker.js`, deploy with `wrangler deploy`. Changes are live immediately.
+
+**Dog Bone Navigation Button Visibility (UNRESOLVED ISSUE):**
+- **Problem:** Dog bone images used for carousel navigation in "How It Works" section are barely visible/invisible against dark cyberpunk background
+- **Image:** `/Images/landing page/dog bone.png` (white bone on transparent background)
+- **Attempted fixes (all unsuccessful):**
+  1. CSS filters: brightness(5), saturate(4), contrast(2)
+  2. Drop-shadow glow effects (cyan/purple/pink themed) - removed per owner request
+  3. Multiple iterations of filter combinations
+  4. Hard refresh to clear browser cache
+- **Current state:** Bones have `brightness(5) saturate(4) contrast(2) hue-rotate(0deg)` with no glow effects
+- **Root cause:** White/light-colored bone PNG not providing enough contrast against `#0a0e27` dark background, even with extreme brightness filters
+- **Potential solutions to try:**
+  1. Use colored bone images instead of white (create blue/purple/pink versions)
+  2. Convert to SVG and apply `fill` colors directly (better than filter approach)
+  3. Add colored background to button container (circular colored backgrounds behind bones)
+  4. Use CSS `mix-blend-mode` for better color blending
+  5. Replace with different icon/image that has better inherent visibility
+- **Files affected:**
+  - [src/App.jsx](src/App.jsx) - Bone images in navigation buttons (lines with `<img src="/Images/landing page/dog bone.png"`)
+  - [src/App.css](src/App.css) - `.nav-bone`, `.prev-bone`, `.next-bone`, `.blanks-theme`, `.boneyard-theme`, `.custom-theme` classes
+- **DO NOT** modify without owner approval - owner requested specific bone image and themed colors

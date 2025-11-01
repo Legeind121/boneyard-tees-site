@@ -11,15 +11,8 @@
   font-style: normal;
 }
 
-@font-face {
-  font-family: 'Ardillah Kafi';
-  src: url('/fonts/Ardillah Kafi.otf') format('opentype');
-  font-weight: normal;
-  font-style: normal;
-}
-
 :root {
-  font-family: 'Ardillah Kafi', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -56,11 +49,13 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 #root {
   width: 100%;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 h1, h2 {

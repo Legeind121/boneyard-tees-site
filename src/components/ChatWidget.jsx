@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import './ChatWidget.css';
 
-function ChatWidget() {
-  const [isOpen, setIsOpen] = useState(false);
+function ChatWidget({ isOpen, setIsOpen }) {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -119,22 +118,6 @@ function ChatWidget() {
 
   return (
     <div className="chat-widget">
-      {/* Chat Bubble Button */}
-      {!isOpen && (
-        <button
-          className="chat-bubble"
-          onClick={() => setIsOpen(true)}
-          aria-label="Open chat with Merica"
-        >
-          <img
-            src="/Images/Merica/Merica_idle.png"
-            alt="Merica"
-            className="bubble-avatar"
-          />
-          <span className="bubble-pulse"></span>
-        </button>
-      )}
-
       {/* Chat Window */}
       {isOpen && (
         <div className="chat-window">
@@ -142,12 +125,12 @@ function ChatWidget() {
           <div className="chat-header">
             <div className="chat-header-content">
               <img
-                src="/Images/Merica/Merica_idle.png"
+                src="/Images/Merica/Merica Idle.png"
                 alt="Merica"
                 className="header-avatar"
               />
               <div className="header-text">
-                <h3>Merica</h3>
+                <h3>Chatting with Merica</h3>
                 <p>BoneYard Tees Mascot</p>
               </div>
             </div>
@@ -169,7 +152,7 @@ function ChatWidget() {
               >
                 {msg.role === 'assistant' && (
                   <img
-                    src="/Images/Merica/Merica_idle.png"
+                    src="/Images/Merica/Merica Idle.png"
                     alt="Merica"
                     className="message-avatar"
                   />
@@ -184,7 +167,7 @@ function ChatWidget() {
             {isLoading && (
               <div className="message assistant">
                 <img
-                  src="/Images/Merica/Merica_idle.png"
+                  src="/Images/Merica/Merica Idle.png"
                   alt="Merica"
                   className="message-avatar"
                 />

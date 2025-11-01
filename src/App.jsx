@@ -14,6 +14,9 @@ function App() {
   // State to track current pose
   const [currentPose, setCurrentPose] = useState(mericaPoses[0])
 
+  // State to track chat open/close
+  const [isChatOpen, setIsChatOpen] = useState(false)
+
   // Array of customer images for carousel (3 real + 2 placeholders)
   const carouselImages = [
     { src: '/Images/customer images/barber & burnout.jpg', alt: 'Barber & Burnout custom design', isPlaceholder: false },
@@ -39,6 +42,77 @@ function App() {
   // State to track current shop carousel index
   const [currentShopCarouselIndex, setCurrentShopCarouselIndex] = useState(0)
   const [isShopCarouselPaused, setIsShopCarouselPaused] = useState(false)
+
+  // How It Works section - Blanks process cards
+  const blanksCards = [
+    {
+      image: '',
+      title: 'Step 1: Browse Blank Apparel',
+      description: 'Choose from our selection of quality blank tees, hoodies, and more.',
+      isPlaceholder: true
+    },
+    {
+      image: '',
+      title: 'Step 2: Select Size & Color',
+      description: 'Pick your preferred size and color options.',
+      isPlaceholder: true
+    },
+    {
+      image: '',
+      title: 'Step 3: Checkout & Ship',
+      description: 'Complete your order and we\'ll ship it fast.',
+      isPlaceholder: true
+    }
+  ]
+
+  // How It Works section - BoneYard Designs process cards
+  const boneyardCards = [
+    {
+      image: '',
+      title: 'Step 1: Browse Our Designs',
+      description: 'Check out BoneYard Tees\' exclusive pre-made designs.',
+      isPlaceholder: true
+    },
+    {
+      image: '',
+      title: 'Step 2: Choose Your Product',
+      description: 'Select which apparel item you want the design on.',
+      isPlaceholder: true
+    },
+    {
+      image: '',
+      title: 'Step 3: We Print & Ship',
+      description: 'We print your order and ship it to you.',
+      isPlaceholder: true
+    }
+  ]
+
+  // How It Works section - Custom Orders process cards
+  const customCards = [
+    {
+      image: '',
+      title: 'Step 1: Upload Your Design',
+      description: 'Submit your artwork or design file.',
+      isPlaceholder: true
+    },
+    {
+      image: '',
+      title: 'Step 2: We Review & Mockup',
+      description: 'Our team creates a preview for your approval.',
+      isPlaceholder: true
+    },
+    {
+      image: '',
+      title: 'Step 3: Approve & We Print',
+      description: 'Once approved, we print and ship your custom order.',
+      isPlaceholder: true
+    }
+  ]
+
+  // State to track How It Works carousel indices
+  const [currentBlanksIndex, setCurrentBlanksIndex] = useState(0)
+  const [currentBoneyardIndex, setCurrentBoneyardIndex] = useState(0)
+  const [currentCustomIndex, setCurrentCustomIndex] = useState(0)
 
   // Preload all images on component mount
   useEffect(() => {
@@ -141,6 +215,39 @@ function App() {
     setTimeout(() => setIsShopCarouselPaused(false), 10000) // Resume after 10 seconds
   }
 
+  // How It Works - Blanks navigation functions
+  const nextBlanksSlide = () => {
+    setCurrentBlanksIndex((prevIndex) => (prevIndex + 1) % blanksCards.length)
+  }
+
+  const prevBlanksSlide = () => {
+    setCurrentBlanksIndex((prevIndex) =>
+      prevIndex === 0 ? blanksCards.length - 1 : prevIndex - 1
+    )
+  }
+
+  // How It Works - BoneYard navigation functions
+  const nextBoneyardSlide = () => {
+    setCurrentBoneyardIndex((prevIndex) => (prevIndex + 1) % boneyardCards.length)
+  }
+
+  const prevBoneyardSlide = () => {
+    setCurrentBoneyardIndex((prevIndex) =>
+      prevIndex === 0 ? boneyardCards.length - 1 : prevIndex - 1
+    )
+  }
+
+  // How It Works - Custom navigation functions
+  const nextCustomSlide = () => {
+    setCurrentCustomIndex((prevIndex) => (prevIndex + 1) % customCards.length)
+  }
+
+  const prevCustomSlide = () => {
+    setCurrentCustomIndex((prevIndex) =>
+      prevIndex === 0 ? customCards.length - 1 : prevIndex - 1
+    )
+  }
+
   return (
     <div className="app">
       {/* Animated Background */}
@@ -169,7 +276,16 @@ function App() {
 
       <main className="main-content">
         <div className="hero-section">
-          <img src={currentPose} alt="Merica" className="merica-character" />
+          <div
+            className="merica-character-wrapper"
+            onClick={() => setIsChatOpen(true)}
+            role="button"
+            tabIndex={0}
+            onKeyPress={(e) => e.key === 'Enter' && setIsChatOpen(true)}
+            aria-label="Chat with Merica"
+          >
+            <img src={currentPose} alt="Merica" className="merica-character" />
+          </div>
           <h2>Welcome to BoneYard Tees</h2>
           <p className="tagline">T-shirts with more personality than your ex.</p>
           <p className="subtext">Premium quality, bold designs, and zero regrets. Shop now, look awesome later.</p>
@@ -278,10 +394,142 @@ function App() {
             </div>
           </div>
         </section>
+
+        {/* Dog Chain Divider */}
+        <div className="dog-chain-divider">
+          <img src="/Images/landing page/dog chain.png" alt="Decorative dog chain divider" />
+        </div>
+
+        {/* How It Works Section */}
+        <section className="how-it-works-section">
+          <h2 className="section-title">How It Works</h2>
+
+          <div className="how-it-works-columns">
+            {/* LEFT COLUMN - Blanks */}
+            <div className="how-it-works-column">
+              <h3 className="how-it-works-title blanks-theme">Blanks</h3>
+              <div className="carousel-container how-it-works-carousel">
+                <div className="carousel-cards">
+                  {blanksCards.map((card, index) => (
+                    <div
+                      key={index}
+                      className={`carousel-card ${index === currentBlanksIndex ? 'active' : ''}`}
+                      style={{
+                        display: index === currentBlanksIndex ? 'block' : 'none'
+                      }}
+                    >
+                      <div className="placeholder-box">
+                        <span className="placeholder-text">Step {index + 1} Image</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button className="carousel-nav carousel-nav-prev blanks-theme" onClick={prevBlanksSlide}>
+                  <img src="/Images/landing page/dog bone.png" alt="" className="nav-bone prev-bone" />
+                </button>
+                <button className="carousel-nav carousel-nav-next blanks-theme" onClick={nextBlanksSlide}>
+                  <img src="/Images/landing page/dog bone.png" alt="" className="nav-bone next-bone" />
+                </button>
+                <div className="carousel-indicators">
+                  {blanksCards.map((_, index) => (
+                    <div
+                      key={index}
+                      className={`carousel-indicator blanks-theme ${index === currentBlanksIndex ? 'active' : ''}`}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="how-it-works-text">
+                <h4>{blanksCards[currentBlanksIndex].title}</h4>
+                <p>{blanksCards[currentBlanksIndex].description}</p>
+              </div>
+            </div>
+
+            {/* MIDDLE COLUMN - BoneYard Designs */}
+            <div className="how-it-works-column">
+              <h3 className="how-it-works-title boneyard-theme">BoneYard Designs</h3>
+              <div className="carousel-container how-it-works-carousel">
+                <div className="carousel-cards">
+                  {boneyardCards.map((card, index) => (
+                    <div
+                      key={index}
+                      className={`carousel-card ${index === currentBoneyardIndex ? 'active' : ''}`}
+                      style={{
+                        display: index === currentBoneyardIndex ? 'block' : 'none'
+                      }}
+                    >
+                      <div className="placeholder-box">
+                        <span className="placeholder-text">Step {index + 1} Image</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button className="carousel-nav carousel-nav-prev boneyard-theme" onClick={prevBoneyardSlide}>
+                  <img src="/Images/landing page/dog bone.png" alt="" className="nav-bone prev-bone" />
+                </button>
+                <button className="carousel-nav carousel-nav-next boneyard-theme" onClick={nextBoneyardSlide}>
+                  <img src="/Images/landing page/dog bone.png" alt="" className="nav-bone next-bone" />
+                </button>
+                <div className="carousel-indicators">
+                  {boneyardCards.map((_, index) => (
+                    <div
+                      key={index}
+                      className={`carousel-indicator boneyard-theme ${index === currentBoneyardIndex ? 'active' : ''}`}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="how-it-works-text">
+                <h4>{boneyardCards[currentBoneyardIndex].title}</h4>
+                <p>{boneyardCards[currentBoneyardIndex].description}</p>
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN - Custom Orders */}
+            <div className="how-it-works-column">
+              <h3 className="how-it-works-title custom-theme">Custom Orders</h3>
+              <div className="carousel-container how-it-works-carousel">
+                <div className="carousel-cards">
+                  {customCards.map((card, index) => (
+                    <div
+                      key={index}
+                      className={`carousel-card ${index === currentCustomIndex ? 'active' : ''}`}
+                      style={{
+                        display: index === currentCustomIndex ? 'block' : 'none'
+                      }}
+                    >
+                      <div className="placeholder-box">
+                        <span className="placeholder-text">Step {index + 1} Image</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button className="carousel-nav carousel-nav-prev custom-theme" onClick={prevCustomSlide}>
+                  <img src="/Images/landing page/dog bone.png" alt="" className="nav-bone prev-bone" />
+                </button>
+                <button className="carousel-nav carousel-nav-next custom-theme" onClick={nextCustomSlide}>
+                  <img src="/Images/landing page/dog bone.png" alt="" className="nav-bone next-bone" />
+                </button>
+                <div className="carousel-indicators">
+                  {customCards.map((_, index) => (
+                    <div
+                      key={index}
+                      className={`carousel-indicator custom-theme ${index === currentCustomIndex ? 'active' : ''}`}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="how-it-works-text">
+                <h4>{customCards[currentCustomIndex].title}</h4>
+                <p>{customCards[currentCustomIndex].description}</p>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
       {/* Merica AI Chatbot */}
-      <ChatWidget />
+      <ChatWidget isOpen={isChatOpen} setIsOpen={setIsChatOpen} />
     </div>
   )
 }
